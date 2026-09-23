@@ -25,6 +25,7 @@
       --success: #10b981;
       --success-bg: rgba(16, 185, 129, 0.1);
       --shadow: rgba(0, 0, 0, 0.4);
+      --danger: #ef4444; /* Added for the warning text */
     }
 
     /* Light Mode Overrides */
@@ -184,8 +185,46 @@
       border: 1px solid rgba(16, 185, 129, 0.2);
     }
 
+    /* Installing Animation State */
+    .installing-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      background: var(--bg-main);
+      padding: 20px;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      width: 100%;
+    }
+
+    .spinner {
+      width: 38px;
+      height: 38px;
+      border: 4px solid var(--border-color);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    .installing-text {
+      font-weight: 700;
+      color: var(--text-main);
+      font-size: 1.1rem;
+    }
+
+    .installing-subtext {
+      font-size: 0.85rem;
+      color: var(--danger);
+      font-weight: 600;
+      animation: pulseText 1.5s infinite;
+    }
+
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    @keyframes pulseText { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+
     /* Hidden states for dynamic UI */
-    #installBtn, #openChromeBtn, #installedStatus {
+    #installBtn, #openChromeBtn, #installedStatus, #installingState {
       display: none; 
     }
   </style>
@@ -227,7 +266,14 @@
         Open in Chrome to Install
       </button>
 
-      <!-- State 3: Already Installed -->
+      <!-- State 3: Installing Animation State -->
+      <div id="installingState" class="installing-state">
+        <div class="spinner"></div>
+        <span class="installing-text">Installing MindGuard-AI...</span>
+        <span class="installing-subtext">Please do not close this app (takes about 15s)</span>
+      </div>
+
+      <!-- State 4: Already Installed -->
       <div id="installedStatus" class="status-badge">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
         App is Installed
@@ -253,63 +299,78 @@
       if (navigator.vibrate) navigator.vibrate(pattern);
     }
 
-    // PWA Installation Logic
+    // Advanced UI State References
     let deferredPrompt;
     const installBtn = document.getElementById('installBtn');
     const openChromeBtn = document.getElementById('openChromeBtn');
+    const installingState = document.getElementById('installingState');
     const installedStatus = document.getElementById('installedStatus');
 
     window.addEventListener('DOMContentLoaded', () => {
       setupSystemThemeEngine();
 
-      // 1. Check if already running in standalone mode (Already Installed)
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      // 1. ADVANCED CHECK: Is it already installed? (Checks native standalone OR local cache flag)
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || localStorage.getItem('mg_pwa_installed') === 'true';
       
+      // 2. ADVANCED CHECK: Are we inside an in-app browser like Instagram, FB, Snapchat?
+      const ua = navigator.userAgent || navigator.vendor || window.opera;
+      const isInAppBrowser = /Instagram|FBAN|FBAV|Line|Snapchat|LinkedIn|Twitter|MicroMessenger/i.test(ua);
+
       if (isStandalone) {
+        // App is confirmed installed, show success badge permanently
         installedStatus.style.display = 'inline-flex';
-        return; // Stop here, app is installed
+      } else if (isInAppBrowser) {
+        // App is not installed, AND user is in Instagram/FB. Force them to open Chrome.
+        openChromeBtn.style.display = 'flex';
+      } else {
+        // Standard Browser (Not in-app, not installed). Wait for the native prompt to fire.
+        // NOTE: On iOS Safari, beforeinstallprompt won't fire, but the user is already in a real browser.
+        // We will catch the prompt on supported browsers below.
       }
 
-      // 2. Default to showing "Open in Chrome" unless the install prompt fires
-      // (This covers iOS Safari, Instagram/Facebook in-app browsers, etc.)
-      openChromeBtn.style.display = 'flex';
-
-      // 3. Listen for the native install prompt
+      // 3. Listen for the native install prompt (Supported on Chrome/Android/Edge)
       window.addEventListener('beforeinstallprompt', (e) => {
-        // Prevent the mini-infobar from appearing on mobile
         e.preventDefault();
         deferredPrompt = e;
         
-        // Since it fired, we can install directly! Switch the buttons.
+        // Ensure "Open in Chrome" is hidden since the native browser fully supports installation
         openChromeBtn.style.display = 'none';
+        
+        // Show the actual install button
         installBtn.style.display = 'flex';
       });
 
-      // Handle Install Click
+      // Handle Direct Install Click
       installBtn.addEventListener('click', async () => {
         triggerHaptic();
         if (deferredPrompt) {
           deferredPrompt.prompt();
           const { outcome } = await deferredPrompt.userChoice;
+          
           if (outcome === 'accepted') {
             console.log('User accepted the install prompt');
+            // Save state so it never shows install buttons again on this device/browser
+            localStorage.setItem('mg_pwa_installed', 'true');
+            
+            // Switch UI to Installing Animation
             installBtn.style.display = 'none';
-            installedStatus.style.display = 'inline-flex';
+            installingState.style.display = 'flex';
+            
+            // Wait 15 seconds to simulate complex installation and OS processing
+            setTimeout(() => {
+              installingState.style.display = 'none';
+              installedStatus.style.display = 'inline-flex';
+            }, 15000);
           }
           deferredPrompt = null;
         }
       });
 
-      // Handle Open in Chrome Click (Android Intent Wrapper)
+      // Handle Open in Chrome Click (Android Intent Wrapper) - ONLY visible on in-app browsers
       openChromeBtn.addEventListener('click', () => {
         triggerHaptic();
-        
-        // Extract the current domain and path without the protocol
         const currentUrl = window.location.href.replace(/^https?:\/\//, '');
         
-        // Try to trigger the Android Chrome Intent
-        // If the user is on iOS, this will fail silently or show an error, 
-        // so we use a try-catch and alert fallback.
         try {
           window.location.href = `intent://${currentUrl}#Intent;scheme=https;package=com.android.chrome;end;`;
         } catch (err) {
@@ -317,11 +378,16 @@
         }
       });
       
-      // Listen for successful install event to update UI immediately
+      // Failsafe: Listen for successful native OS install event
       window.addEventListener('appinstalled', () => {
-        installBtn.style.display = 'none';
-        openChromeBtn.style.display = 'none';
-        installedStatus.style.display = 'inline-flex';
+        localStorage.setItem('mg_pwa_installed', 'true');
+        // We do not interrupt the 15-second animation if it's already running, 
+        // but if it triggers outside that flow, update the UI cleanly.
+        if (installingState.style.display !== 'flex') {
+          installBtn.style.display = 'none';
+          openChromeBtn.style.display = 'none';
+          installedStatus.style.display = 'inline-flex';
+        }
         deferredPrompt = null;
       });
     });
