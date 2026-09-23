@@ -2,10 +2,10 @@
   "name": "MindGuard-AI",
   "short_name": "MindGuard",
   "description": "AI that detects wellbeing changes before they become crises.",
-  "start_url": "/",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "background_color": "#121212",
+  "theme_color": "#121212",
   "orientation": "portrait-primary",
   "icons": [
     {
