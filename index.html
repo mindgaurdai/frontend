@@ -1069,6 +1069,15 @@
     }
 
     function saveStateToStorage() {
+      // FIX: Memory and Storage Limit Enforcement
+      // Keeps the app perfectly fast and avoids Chrome's 5MB LocalStorage limit
+      // by capping every single chat conversation to the 100 most recent messages.
+      Object.values(state.sessions).forEach(session => {
+        if (session.history.length > 100) {
+          session.history = session.history.slice(-100);
+        }
+      });
+      
       localStorage.setItem('mg_sessions', JSON.stringify(state.sessions));
       localStorage.setItem('mg_active_id', state.currentSessionId);
     }
@@ -1272,7 +1281,7 @@
         actionsDiv.classList.add('message-actions');
         actionsDiv.innerHTML = `
           <button class="msg-action-icon" aria-label="Copy message" onclick="copyMessageText(this)">
-            <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
           </button>
           <button class="msg-action-icon" aria-label="Speak message" onclick="speakMessageText(this)">
             <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
