@@ -6,51 +6,51 @@
   <title>MindGuard-AI</title>
   
   <!-- PWA & Meta Tags -->
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
-  <meta name="theme-color" id="metaThemeColor" content="#0f172a">
+  <meta name="theme-color" id="metaThemeColor" content="#121212">
   <meta name="description" content="AI that detects wellbeing changes before they become crises.">
 
   <style>
-    /* CSS Variables for Dynamic System Dark / Light Theme */
+    /* CSS Variables for Dynamic System Dark / Light Theme (Powerful Gray Palette) */
     :root {
-      --bg-main: #0f172a;
-      --bg-card: #1e293b;
-      --bg-sidebar: #090d16;
-      --border-color: #334155;
-      --text-main: #f8fafc;
-      --text-sub: #94a3b8;
-      --accent: #0ea5e9;
-      --accent-hover: #0284c7;
-      --user-msg: #0369a1;
-      --ai-msg: #1e293b;
-      --input-bg: #1e293b;
-      --overlay-bg: rgba(0, 0, 0, 0.6);
-      --shimmer-1: #1e293b;
-      --shimmer-2: #334155;
-      --shadow: rgba(0, 0, 0, 0.35);
+      --bg-main: #121212;
+      --bg-card: #1e1e1e;
+      --bg-sidebar: #0a0a0a;
+      --border-color: #333333;
+      --text-main: #e4e4e7;
+      --text-sub: #a1a1aa;
+      --accent: #52525b;
+      --accent-hover: #71717a;
+      --user-msg: #3f3f46;
+      --ai-msg: #1e1e1e;
+      --input-bg: #1e1e1e;
+      --overlay-bg: rgba(0, 0, 0, 0.7);
+      --shimmer-1: #1e1e1e;
+      --shimmer-2: #333333;
+      --shadow: rgba(0, 0, 0, 0.4);
       --danger: #ef4444;
       --danger-hover: #dc2626;
     }
 
-    /* Light Mode Overrides */
+    /* Light Mode Overrides (Powerful Light Gray Palette) */
     body.light-mode {
-      --bg-main: #f8fafc;
+      --bg-main: #f4f4f5;
       --bg-card: #ffffff;
-      --bg-sidebar: #f1f5f9;
-      --border-color: #e2e8f0;
-      --text-main: #0f172a;
-      --text-sub: #64748b;
-      --accent: #0284c7;
-      --accent-hover: #0369a1;
-      --user-msg: #0284c7;
+      --bg-sidebar: #e4e4e7;
+      --border-color: #d4d4d8;
+      --text-main: #18181b;
+      --text-sub: #52525b;
+      --accent: #3f3f46;
+      --accent-hover: #27272a;
+      --user-msg: #52525b;
       --ai-msg: #ffffff;
       --input-bg: #ffffff;
-      --overlay-bg: rgba(15, 23, 42, 0.4);
-      --shimmer-1: #e2e8f0;
-      --shimmer-2: #f8fafc;
-      --shadow: rgba(0, 0, 0, 0.08);
+      --overlay-bg: rgba(24, 24, 27, 0.5);
+      --shimmer-1: #e4e4e7;
+      --shimmer-2: #f4f4f5;
+      --shadow: rgba(0, 0, 0, 0.1);
     }
 
     * { 
@@ -66,8 +66,11 @@
       overscroll-behavior-y: none;
       background-color: var(--bg-main);
       color: var(--text-main);
-      height: 100vh;
-      height: -webkit-fill-available;
+      width: 100%;
+      height: 100dvh; /* Dynamic Viewport Height fixes keyboard pushing layout out */
+      position: absolute;
+      top: 0;
+      left: 0;
       overflow: hidden;
     }
 
@@ -143,7 +146,7 @@
 
     .sidebar-header {
       padding: 18px 16px;
-      border-bottom: 1px solid var(--border-color);
+      border-bottom: none; /* Border removed as requested */
       display: flex;
       align-items: center;
       gap: 12px;
@@ -255,7 +258,7 @@
     .top-bar {
       height: 60px;
       padding: 0 16px;
-      border-bottom: 1px solid var(--border-color);
+      border-bottom: none; /* Border removed as requested */
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -324,7 +327,7 @@
       font-weight: 700;
       border: none;
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(14, 165, 233, 0.4);
+      box-shadow: 0 2px 8px rgba(82, 82, 91, 0.4);
       transition: background 0.2s;
     }
     
@@ -782,7 +785,7 @@
         document.body.classList.toggle('light-mode', !isDark);
         const metaTheme = document.getElementById('metaThemeColor');
         if (metaTheme) {
-          metaTheme.setAttribute('content', isDark ? '#0f172a' : '#f8fafc');
+          metaTheme.setAttribute('content', isDark ? '#121212' : '#f4f4f5');
         }
       };
 
@@ -1099,7 +1102,7 @@
     // --- 6. Utilities & Service Worker Registration ---
     function registerPWA() {
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js')
+        navigator.serviceWorker.register('sw.js')
           .then(() => console.log('Service Worker Active'))
           .catch(err => console.log('SW Registration Failed:', err));
       }
