@@ -32,6 +32,7 @@
       --shadow: rgba(0, 0, 0, 0.4);
       --danger: #ef4444;
       --danger-hover: #dc2626;
+      --blur-bg: rgba(18, 18, 18, 0.75); /* Added for input blur */
     }
 
     /* Light Mode Overrides (Powerful Light Gray Palette) */
@@ -51,6 +52,7 @@
       --shimmer-1: #e4e4e7;
       --shimmer-2: #f4f4f5;
       --shadow: rgba(0, 0, 0, 0.1);
+      --blur-bg: rgba(244, 244, 245, 0.75); /* Added for input blur */
     }
 
     * { 
@@ -497,7 +499,9 @@
       width: 100%;
       margin: 0 auto;
       margin-top: auto;
-      background: var(--bg-main);
+      background: var(--blur-bg); /* Changed for glassmorphism blur effect */
+      backdrop-filter: blur(12px); /* Added Blur */
+      -webkit-backdrop-filter: blur(12px); /* Added Blur Safari */
       z-index: 50; /* Changed from 1000 to sit below overlays */
       flex-shrink: 0;
     }
@@ -511,6 +515,7 @@
       padding: 8px 12px 8px 18px;
       box-shadow: 0 4px 16px var(--shadow);
       gap: 8px;
+      margin-bottom: 15px; /* Added 15px Bottom Margin above keyboard */
       transition: all 0.3s ease;
     }
     
@@ -856,6 +861,13 @@
 
     const INITIAL_WELCOME = "Hello! I am MindGuard-AI. How are you feeling today? You can share your mood, stress levels, or daily sleep quality.";
 
+    // --- NEW: Global Haptic Feedback Helper ---
+    function triggerHaptic(pattern = 15) {
+      if (navigator.vibrate) {
+        navigator.vibrate(pattern);
+      }
+    }
+
     // --- 1. System Initialization & Theme Handler ---
     window.addEventListener('DOMContentLoaded', () => {
       loadStateFromStorage();
@@ -955,12 +967,14 @@
     }
 
     function openSidebar() {
+      triggerHaptic();
       document.getElementById('sidebar').classList.add('active');
       document.getElementById('sidebarOverlay').classList.add('active');
       pushOverlayState('sidebar');
     }
 
     function openBottomSheet(sessionId, event) {
+      triggerHaptic();
       event.stopPropagation();
       state.selectedTargetSessionId = sessionId;
       document.getElementById('bottomSheet').classList.add('active');
@@ -1005,6 +1019,7 @@
     }
 
     function toggleSpeechRecognition() {
+      triggerHaptic();
       if (!speechRecognizer) return;
       if (isListening) {
         speechRecognizer.stop();
@@ -1035,6 +1050,7 @@
     }
 
     function createNewSession(shouldRender = true) {
+      if (shouldRender) triggerHaptic();
       const newId = 'session_' + Date.now();
       state.sessions[newId] = {
         id: newId,
@@ -1054,6 +1070,7 @@
     }
 
     function switchSession(id) {
+      triggerHaptic();
       if (!state.sessions[id]) return;
       state.currentSessionId = id;
       saveStateToStorage();
@@ -1063,6 +1080,7 @@
     }
 
     function triggerDeleteSession() {
+      triggerHaptic([30, 50, 30]); // Distinct pattern for delete action
       const id = state.selectedTargetSessionId;
       if (!id || !state.sessions[id]) return;
 
@@ -1082,6 +1100,7 @@
     }
 
     function triggerRenameSession() {
+      triggerHaptic();
       const id = state.selectedTargetSessionId;
       if (!id || !state.sessions[id]) return;
 
@@ -1095,6 +1114,7 @@
     }
 
     function saveSessionRename() {
+      triggerHaptic();
       const id = state.selectedTargetSessionId;
       const inputEl = document.getElementById('renameInput');
       const newTitle = inputEl.value.trim();
@@ -1144,6 +1164,7 @@
 
     // --- 5. Messaging Engine & Backend Connectivity ---
     async function sendMessage() {
+      triggerHaptic();
       const inputEl = document.getElementById('userInput');
       const text = inputEl.value.trim();
       if (!text) return;
@@ -1236,7 +1257,7 @@
     
     // --- NEW: Copy & Speak Interactions ---
     window.copyMessageText = function(btn) {
-       if(navigator.vibrate) navigator.vibrate(2);
+       triggerHaptic(20);
        const wrapper = btn.closest('.message-wrapper');
        const text = wrapper.querySelector('.message').innerText;
        navigator.clipboard.writeText(text);
@@ -1245,7 +1266,7 @@
     };
     
     window.speakMessageText = function(btn) {
-       if(navigator.vibrate) navigator.vibrate(2);
+       triggerHaptic(20);
        const wrapper = btn.closest('.message-wrapper');
        const text = wrapper.querySelector('.message').innerText;
        
@@ -1295,6 +1316,7 @@
     }
 
     function installPWA() {
+      triggerHaptic();
       if (!deferredPrompt) return;
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(() => {
