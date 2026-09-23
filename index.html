@@ -461,7 +461,8 @@
       font-size: 0.9rem;
       color: var(--text-main);
       font-weight: 500;
-      animation: pulseText 1.5s ease-in-out infinite;
+      /* removed pulsing text animation to make it cleaner while changing text */
+      transition: opacity 0.3s ease;
     }
     
     .thinking-logo-container {
@@ -477,7 +478,6 @@
     }
 
     @keyframes spin { 100% { transform: rotate(360deg); } }
-    @keyframes pulseText { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
     @keyframes pulse-logo { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 
     /* Maintained original shimmer CSS just in case */
@@ -861,6 +861,30 @@
 
     const INITIAL_WELCOME = "Hello! I am MindGuard-AI. How are you feeling today? You can share your mood, stress levels, or daily sleep quality.";
 
+    // --- NEW: AI Dynamic Processing Phrases ---
+    const thinkingPhrases = [
+      "Analyzing mood patterns...",
+      "Evaluating stress indicators...",
+      "Reviewing behavioral context...",
+      "Synthesizing psychological insights...",
+      "Processing emotional nuances...",
+      "Consulting cognitive frameworks...",
+      "Formulating empathetic response...",
+      "Generating actionable advice...",
+      "Aligning with wellness goals...",
+      "Structuring supportive guidance...",
+      "Calibrating tone and empathy...",
+      "Identifying cognitive distortions...",
+      "Reflecting on recent interactions...",
+      "Preparing coping strategies...",
+      "Deepening context awareness...",
+      "Evaluating mindfulness techniques...",
+      "Cross-referencing psychological models...",
+      "Refining conversational flow...",
+      "Finalizing response logic...",
+      "MindGuard-AI is almost ready..."
+    ];
+
     // --- NEW: Global Haptic Feedback Helper ---
     function triggerHaptic(pattern = 15) {
       if (navigator.vibrate) {
@@ -1151,6 +1175,9 @@
 
     function renderCurrentChat() {
       const chatBox = document.getElementById('chatBox');
+      
+      // FIX: Disable smooth scrolling temporarily to prevent top-to-bottom scroll effect on initial page load
+      chatBox.style.scrollBehavior = 'auto';
       chatBox.innerHTML = '';
 
       const activeSession = state.sessions[state.currentSessionId];
@@ -1160,6 +1187,12 @@
         const type = msg.role === 'model' ? 'ai' : 'user';
         appendMessageUI(msg.parts[0].text, type);
       });
+      
+      // FIX: Force scroll to bottom instantly, then safely restore smooth scrolling for new messages
+      chatBox.scrollTop = chatBox.scrollHeight;
+      setTimeout(() => {
+          chatBox.style.scrollBehavior = 'smooth';
+      }, 50);
     }
 
     // --- 5. Messaging Engine & Backend Connectivity ---
@@ -1185,7 +1218,7 @@
       activeSession.history.push({ role: 'user', parts: [{ text }] });
       saveStateToStorage();
 
-      // Show Gemini Thinking Loader
+      // Show Gemini Thinking Loader with dynamic text
       const thinkingEl = showThinkingAnimation();
 
       try {
@@ -1196,7 +1229,9 @@
         });
 
         const data = await response.json();
-        thinkingEl.remove();
+        
+        // This instantly removes the element and automatically stops the text cycle interval
+        thinkingEl.remove(); 
 
         if (response.status === 429) {
           appendMessageUI(data.error || "Rate limit exceeded. Please wait a minute.", 'ai');
@@ -1278,19 +1313,43 @@
        }
     };
 
-    // --- UPDATED: Replicated Advanced Spinner Animation ---
+    // --- UPDATED: Dynamic Spinner Animation (Cycles phrases one by one) ---
     function showThinkingAnimation() {
       const chatBox = document.getElementById('chatBox');
       const container = document.createElement('div');
       container.classList.add('thinking-container');
+      
       container.innerHTML = `
         <div class="thinking-logo-container">
             <div class="thinking-spinner"></div>
             <img src="icon.png" class="thinking-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2965/2965358.png'">
         </div>
-        <div class="thinking-header">MindGuard-AI is reflecting...</div>
+        <div class="thinking-header" id="dynamicThinkingText">Processing data...</div>
       `;
       chatBox.appendChild(container);
+      
+      // Setup dynamic text cycling
+      const dynamicTextEl = container.querySelector('#dynamicThinkingText');
+      let phraseIndex = 0;
+      
+      // Change text every 1.5 seconds smoothly
+      const cycleInterval = setInterval(() => {
+          dynamicTextEl.style.opacity = 0; // Fade out
+          
+          setTimeout(() => {
+              dynamicTextEl.innerText = thinkingPhrases[phraseIndex % thinkingPhrases.length];
+              dynamicTextEl.style.opacity = 1; // Fade in
+              phraseIndex++;
+          }, 300); // Wait for fade out to complete before changing text
+          
+      }, 1500); 
+
+      // Override container.remove() to securely stop the interval loop instantly when API responds
+      const originalRemove = container.remove.bind(container);
+      container.remove = () => {
+          clearInterval(cycleInterval);
+          originalRemove();
+      };
       
       requestAnimationFrame(() => {
         chatBox.scrollTop = chatBox.scrollHeight;
