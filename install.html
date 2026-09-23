@@ -196,6 +196,7 @@
       border-radius: 16px;
       border: 1px solid var(--border-color);
       width: 100%;
+      position: relative;
     }
 
     .spinner {
@@ -218,6 +219,24 @@
       color: var(--danger);
       font-weight: 600;
       animation: pulseText 1.5s infinite;
+    }
+
+    /* Advanced Progress Bar */
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: var(--border-color);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      transition: width 1s linear;
+      border-radius: 10px;
     }
 
     @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -266,11 +285,14 @@
         Open in Chrome to Install
       </button>
 
-      <!-- State 3: Installing Animation State -->
+      <!-- State 3: Installing Animation State (Advanced) -->
       <div id="installingState" class="installing-state">
         <div class="spinner"></div>
         <span class="installing-text">Installing MindGuard-AI...</span>
-        <span class="installing-subtext">Please do not close this app (takes about 15s)</span>
+        <span id="installSubtext" class="installing-subtext">Please do not close this app (takes about 30s)</span>
+        <div class="progress-bar-container">
+          <div id="progressBar" class="progress-bar-fill"></div>
+        </div>
       </div>
 
       <!-- State 4: Already Installed -->
@@ -305,6 +327,8 @@
     const openChromeBtn = document.getElementById('openChromeBtn');
     const installingState = document.getElementById('installingState');
     const installedStatus = document.getElementById('installedStatus');
+    const installSubtext = document.getElementById('installSubtext');
+    const progressBar = document.getElementById('progressBar');
 
     window.addEventListener('DOMContentLoaded', () => {
       setupSystemThemeEngine();
@@ -356,11 +380,19 @@
             installBtn.style.display = 'none';
             installingState.style.display = 'flex';
             
-            // Wait 15 seconds to simulate complex installation and OS processing
+            // Wait 30 seconds to simulate complex installation and OS processing with advanced progress tracking
+            let timeLeft = 30;
+            const progressTimer = setInterval(() => {
+              timeLeft--;
+              if (progressBar) progressBar.style.width = Math.min(100, ((30 - timeLeft) / 30) * 100) + '%';
+              if (installSubtext) installSubtext.innerText = `Please do not close this app (takes about ${timeLeft}s)`;
+              if (timeLeft <= 0) clearInterval(progressTimer);
+            }, 1000);
+
             setTimeout(() => {
               installingState.style.display = 'none';
               installedStatus.style.display = 'inline-flex';
-            }, 15000);
+            }, 30000);
           }
           deferredPrompt = null;
         }
@@ -381,7 +413,7 @@
       // Failsafe: Listen for successful native OS install event
       window.addEventListener('appinstalled', () => {
         localStorage.setItem('mg_pwa_installed', 'true');
-        // We do not interrupt the 15-second animation if it's already running, 
+        // We do not interrupt the 30-second animation if it's already running, 
         // but if it triggers outside that flow, update the UI cleanly.
         if (installingState.style.display !== 'flex') {
           installBtn.style.display = 'none';
