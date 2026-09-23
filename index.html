@@ -69,11 +69,6 @@
       width: 100%;
       height: 100vh;
       height: 100dvh; /* Dynamic Viewport Height fixes keyboard pushing layout out */
-      position: fixed; /* FIXED: Keeps body anchored so keyboard resizes it instead of pushing it up */
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
       overflow: hidden;
     }
 
@@ -336,7 +331,7 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      background: rgba(255, 255, 255, 0.08); /* Transparent subtle fill */
+      background: transparent; /* Completely transparent background */
       color: var(--text-main);
       padding: 8px 18px;
       border-radius: 20px;
@@ -345,19 +340,17 @@
       border: 1px solid var(--border-color); /* Subtle border to define shape */
       cursor: pointer;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-      backdrop-filter: blur(12px); /* Glassmorphism blur */
-      -webkit-backdrop-filter: blur(12px);
       transition: background 0.2s, transform 0.1s;
       margin: 0 auto 16px auto; /* Centers pill above input field */
       width: fit-content;
     }
     
     body.light-mode .install-pill {
-      background: rgba(0, 0, 0, 0.05); /* Adjusted for light mode readability */
+      background: transparent; /* Maintained transparency for light mode */
     }
 
     .install-pill:hover {
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05); /* Very slight hover effect */
     }
 
     /* Chat Messages Window - UPDATED INDEPENDENT SCROLL ZONE */
@@ -869,9 +862,15 @@
       function lockViewportAndHeader() {
           if (window.visualViewport) {
               const vh = window.visualViewport.height;
-              document.documentElement.style.height = vh + 'px';
-              document.body.style.height = vh + 'px';
+              const mainContainer = document.getElementById('main-app');
+              if (mainContainer) {
+                  mainContainer.style.height = vh + 'px';
+              }
               window.scrollTo(0, 0); // Stops the native browser jump bug when typing
+              
+              // Force scroll to bottom so the user can still see the last message
+              const chatBox = document.getElementById('chatBox');
+              if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
           }
       }
       
@@ -885,10 +884,6 @@
       inputEl.addEventListener('focus', () => {
           setTimeout(lockViewportAndHeader, 10);
           setTimeout(lockViewportAndHeader, 300);
-          
-          // Force scroll to bottom so the user can still see the last message
-          const chatBox = document.getElementById('chatBox');
-          if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
       });
       inputEl.addEventListener('blur', () => {
           setTimeout(lockViewportAndHeader, 100);
