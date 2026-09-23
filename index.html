@@ -67,10 +67,13 @@
       background-color: var(--bg-main);
       color: var(--text-main);
       width: 100%;
+      height: 100vh;
       height: 100dvh; /* Dynamic Viewport Height fixes keyboard pushing layout out */
-      position: absolute;
+      position: fixed; /* FIXED: Keeps body anchored so keyboard resizes it instead of pushing it up */
       top: 0;
       left: 0;
+      right: 0;
+      bottom: 0;
       overflow: hidden;
     }
 
@@ -106,7 +109,7 @@
       inset: 0;
       background: var(--overlay-bg);
       backdrop-filter: blur(3px);
-      z-index: 3000; /* FIXED: Elevated dramatically to stay above input field */
+      z-index: 3000; /* Elevated dramatically to stay above input field */
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.25s ease;
@@ -127,7 +130,7 @@
       position: fixed;
       left: 0;
       top: 0;
-      z-index: 3001; /* FIXED: Elevated above overlay and input field */
+      z-index: 3001; /* Elevated above overlay and input field */
       transform: translateX(-100%);
       transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -172,12 +175,12 @@
     }
 
     .new-chat-btn {
-      margin: 0; /* FIXED: Removed margins completely */
+      margin: 0; /* Removed margins completely */
       padding: 16px;
       background: var(--accent);
       color: #ffffff;
       border: none;
-      border-radius: 0; /* FIXED: Removed border radius for edge-to-edge fit */
+      border-radius: 0; /* Removed border radius for edge-to-edge fit */
       font-weight: 600;
       font-size: 0.95rem;
       display: flex;
@@ -195,15 +198,15 @@
     .session-list {
       flex: 1;
       overflow-y: auto;
-      padding: 0; /* FIXED: Removed padding */
+      padding: 0; /* Removed padding */
       display: flex;
       flex-direction: column;
-      gap: 0; /* FIXED: Removed gap to act as list items */
+      gap: 0; /* Removed gap to act as list items */
     }
 
     .session-item {
       padding: 14px 16px;
-      border-radius: 0; /* FIXED: Removed border radius */
+      border-radius: 0; /* Removed border radius */
       border-bottom: 1px solid var(--border-color); /* Added subtle separator */
       color: var(--text-main);
       font-size: 0.9rem;
@@ -256,6 +259,7 @@
       display: flex;
       flex-direction: column;
       height: 100%;
+      width: 100%;
       position: relative;
       background: var(--bg-main);
       padding-top: 60px; /* Offset for absolute top-bar */
@@ -326,28 +330,34 @@
       color: var(--accent);
     }
 
-    /* PWA Install Pill */
+    /* PWA Install Pill - FIXED FOR TRANSPARENT GLASSMORPHISM */
     .install-pill {
       display: none;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      background: var(--accent);
-      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08); /* Transparent subtle fill */
+      color: var(--text-main);
       padding: 8px 18px;
       border-radius: 20px;
       font-size: 0.85rem;
       font-weight: 700;
-      border: none;
+      border: 1px solid var(--border-color); /* Subtle border to define shape */
       cursor: pointer;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(12px); /* Glassmorphism blur */
+      -webkit-backdrop-filter: blur(12px);
       transition: background 0.2s, transform 0.1s;
-      margin: 0 auto 16px auto; /* FIXED: Centers pill above input field */
+      margin: 0 auto 16px auto; /* Centers pill above input field */
       width: fit-content;
     }
     
+    body.light-mode .install-pill {
+      background: rgba(0, 0, 0, 0.05); /* Adjusted for light mode readability */
+    }
+
     .install-pill:hover {
-      background: var(--accent-hover);
+      background: rgba(255, 255, 255, 0.15);
     }
 
     /* Chat Messages Window - UPDATED INDEPENDENT SCROLL ZONE */
@@ -485,7 +495,7 @@
       margin: 0 auto;
       margin-top: auto;
       background: var(--bg-main);
-      z-index: 1000;
+      z-index: 10; /* FIXED: Lowered z-index so it doesn't overlap higher modals */
       flex-shrink: 0;
     }
 
@@ -573,7 +583,7 @@
       inset: 0;
       background: var(--overlay-bg);
       backdrop-filter: blur(2px);
-      z-index: 4000; /* FIXED: Elevated above input field */
+      z-index: 4000; /* Elevated above input field */
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.25s ease;
@@ -594,7 +604,7 @@
       border-top-right-radius: 20px;
       border-top: 1px solid var(--border-color);
       padding: 20px 20px 32px 20px;
-      z-index: 4001; /* FIXED: Elevated above overlay and input field */
+      z-index: 4001; /* Elevated above overlay and input field */
       transform: translateY(100%);
       transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
@@ -651,7 +661,7 @@
       inset: 0;
       background: var(--overlay-bg);
       backdrop-filter: blur(3px);
-      z-index: 5000; /* FIXED: Maximum elevation to stay above all elements */
+      z-index: 5000; /* Maximum elevation to stay above all elements */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -849,20 +859,22 @@
       registerPWA();
       setupSpeechRecognition();
       setupHistoryBackHandler();
-      setupViewportLock(); // NEW: Keyboard mobile fix
+      setupViewportLock(); // FIXED: Refined keyboard mobile fix
       renderSidebar();
       renderCurrentChat();
     });
 
-    // --- NEW: Viewport Mobile Lock (Keyboard Fixes) ---
+    // --- FIXED: Refined Viewport Mobile Lock (Keyboard Fixes) ---
     function setupViewportLock() {
       function lockViewportAndHeader() {
-          const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-          document.body.style.height = vh + 'px';
-          window.scrollTo(0, 0);
-          document.documentElement.scrollTop = 0;
-          document.body.scrollTop = 0;
+          if (window.visualViewport) {
+              const vh = window.visualViewport.height;
+              document.documentElement.style.height = vh + 'px';
+              document.body.style.height = vh + 'px';
+              window.scrollTo(0, 0); // Stops the native browser jump bug when typing
+          }
       }
+      
       if (window.visualViewport) {
           window.visualViewport.addEventListener('resize', lockViewportAndHeader);
           window.visualViewport.addEventListener('scroll', lockViewportAndHeader);
@@ -873,10 +885,17 @@
       inputEl.addEventListener('focus', () => {
           setTimeout(lockViewportAndHeader, 10);
           setTimeout(lockViewportAndHeader, 300);
+          
+          // Force scroll to bottom so the user can still see the last message
+          const chatBox = document.getElementById('chatBox');
+          if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
       });
       inputEl.addEventListener('blur', () => {
           setTimeout(lockViewportAndHeader, 100);
       });
+      
+      // Initialize heights instantly on load
+      lockViewportAndHeader();
     }
 
     // Automatic System Default Theme Syncing
