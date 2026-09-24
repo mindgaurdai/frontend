@@ -18,6 +18,9 @@
   <style>
     /* CSS Variables for Dynamic System Dark / Light Theme & 3D Sync */
     :root {
+      /* Base System Background (Fixed to prevent white flash) */
+      --app-bg: #050505;
+
       /* DYNAMIC UI SYNC VARIABLES (Updated via JS based on AI Mood) */
       --dynamic-color: #4e4376; 
       --dynamic-glow: rgba(78, 67, 118, 0.4);
@@ -25,7 +28,7 @@
       /* App Theme Overlays (Highly transparent for 3D visibility) */
       --bg-main: rgba(18, 18, 18, 0.25); 
       --bg-card: rgba(25, 25, 25, 0.65);
-      --bg-sidebar: rgba(15, 15, 18, 0.95); /* Deep dark frosted glass */
+      --bg-sidebar: rgba(15, 15, 18, 0.95); 
       --border-color: rgba(255, 255, 255, 0.1);
       
       --text-main: #ffffff;
@@ -37,14 +40,14 @@
       --overlay-bg: rgba(0, 0, 0, 0.7);
       --shadow: rgba(0, 0, 0, 0.5);
       --danger: #ef4444;
-      --blur-bg: transparent; 
     }
 
-    /* Light Mode Overrides - Maintains 3D Visibility but adapts text contrast */
+    /* Light Mode Overrides */
     body.light-mode {
+      --app-bg: #f4f4f5;
       --bg-main: rgba(255, 255, 255, 0.45);
       --bg-card: rgba(255, 255, 255, 0.75);
-      --bg-sidebar: rgba(250, 250, 252, 0.95); /* Clean bright frosted glass */
+      --bg-sidebar: rgba(250, 250, 252, 0.95); 
       --border-color: rgba(0, 0, 0, 0.1);
       
       --text-main: #18181b;
@@ -64,6 +67,15 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    /* Absolute Bottom Base Layer to handle Light/Dark transitions smoothly */
+    #bg-layer {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background-color: var(--app-bg);
+      transition: background-color 0.5s ease;
+    }
+
     /* WebGL Canvas Background */
     #webgl-canvas {
       position: fixed;
@@ -73,12 +85,12 @@
       height: 100vh;
       z-index: -1; 
       pointer-events: none; 
-      background: #050505; /* Deep space base behind the 3D object */
+      background: transparent; 
     }
 
     html, body {
       overscroll-behavior-y: none;
-      background-color: #050505; /* Hard-coded black instantly prevents white flash on load */
+      background-color: transparent; 
       color: var(--text-main);
       width: 100%;
       height: 100dvh;
@@ -93,7 +105,7 @@
       transition: color 0.25s;
     }
 
-    /* Custom Webkit Scrollbars for Professional Look */
+    /* Custom Webkit Scrollbars */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -114,7 +126,7 @@
       scrollbar-width: none;  
     }
 
-    /* Sidebar - Navigation Drawer */
+    /* Sidebar Navigation */
     .sidebar-overlay {
       position: fixed;
       inset: 0;
@@ -212,7 +224,7 @@
     .new-chat-btn svg {
       width: 20px;
       height: 20px;
-      flex-shrink: 0; /* Prevents icon from breaking layout on small screens */
+      flex-shrink: 0; 
     }
 
     .new-chat-btn:active {
@@ -251,7 +263,7 @@
     .session-item.active {
       font-weight: 600;
       border-left: 4px solid var(--dynamic-color);
-      background-color: var(--dynamic-glow); /* Smooth ambient glow for active session */
+      background-color: var(--dynamic-glow); 
       color: var(--text-main);
     }
 
@@ -293,7 +305,7 @@
       padding-top: 60px;
     }
 
-    /* PREMIUM FROSTED TOP BAR - Theme Agnostic */
+    /* PREMIUM FROSTED TOP BAR */
     .top-bar {
       position: absolute;
       top: 0;
@@ -341,7 +353,6 @@
     .icon-btn svg {
       width: 22px;
       height: 22px;
-      /* Enforcing stroke usage for new premium icons */
       stroke: currentColor;
       fill: none;
     }
@@ -409,6 +420,7 @@
       scroll-behavior: smooth;
       -webkit-overflow-scrolling: touch;
       transform: translateZ(0); 
+      transition: opacity 0.5s ease;
     }
     
     .message-wrapper {
@@ -531,6 +543,7 @@
       background: transparent; 
       z-index: 50; 
       flex-shrink: 0;
+      transition: opacity 0.5s ease;
     }
 
     .input-box {
@@ -564,27 +577,27 @@
       max-height: 140px;
       font-size: 0.95rem;
       line-height: 1.45;
-      padding: 10px 0; /* Aligned vertically */
+      padding: 10px 0; 
       overscroll-behavior-y: contain;
     }
 
-    /* ACTION BUTTON OVERHAUL: Strict Shapes & Professional Flex Rules */
+    /* ACTION BUTTONS */
     .action-btn {
       background: transparent;
       border: none;
       color: var(--text-sub);
       width: 40px;
       height: 40px;
-      min-width: 40px; /* Forces exact shape */
-      min-height: 40px; /* Forces exact shape */
+      min-width: 40px; 
+      min-height: 40px; 
       border-radius: 50%;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.3s ease;
-      flex-shrink: 0; /* Prevents squishing */
-      margin-bottom: 2px; /* Bottom alignment */
+      flex-shrink: 0; 
+      margin-bottom: 2px; 
     }
 
     .action-btn svg {
@@ -594,7 +607,6 @@
       fill: none;
     }
 
-    /* Frosted Mic Button */
     .mic-btn {
       background: rgba(100, 100, 100, 0.15); 
       backdrop-filter: blur(8px);
@@ -619,7 +631,6 @@
       100% { transform: scale(1); box-shadow: 0 0 10px var(--dynamic-glow); }
     }
 
-    /* Dynamic Send Button */
     .send-btn {
       background: var(--dynamic-color);
       color: #ffffff;
@@ -815,9 +826,56 @@
     .btn-primary:hover {
       box-shadow: 0 6px 20px var(--dynamic-glow);
     }
+
+    /* VOICE COMPANION MODE OVERLAY */
+    .voice-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 40; /* Below top bar, above chat */
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 40px 20px;
+      padding-bottom: calc(40px + env(safe-area-inset-bottom));
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    .voice-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .voice-captions {
+      background: rgba(20, 20, 25, 0.75);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid var(--dynamic-color);
+      border-radius: 20px;
+      padding: 24px;
+      color: #ffffff;
+      font-size: 1.15rem;
+      line-height: 1.6;
+      text-align: center;
+      box-shadow: 0 10px 40px var(--dynamic-glow);
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.5s ease;
+    }
+
+    body.light-mode .voice-captions {
+      background: rgba(255, 255, 255, 0.85);
+      color: #18181b;
+    }
   </style>
 </head>
 <body>
+
+  <!-- Absolute bottom layer fixes Light/Dark transition flash -->
+  <div id="bg-layer"></div>
 
   <!-- WebGL 3D Background Canvas -->
   <canvas id="webgl-canvas"></canvas>
@@ -832,7 +890,6 @@
       <h2>MindGuard-AI</h2>
     </div>
     <button class="new-chat-btn" onclick="createNewSession()" aria-label="Start new conversation">
-      <!-- Premium New Chat Icon -->
       <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><line x1="12" y1="9" x2="12" y2="15"></line><line x1="9" y1="12" x2="15" y2="12"></line></svg>
       New Conversation
     </button>
@@ -845,7 +902,6 @@
     <header class="top-bar">
       <div class="top-bar-left">
         <button class="icon-btn menu-btn" onclick="openSidebar()" aria-label="Open Conversations Menu">
-          <!-- Premium Menu Icon -->
           <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
         <div class="brand-title">
@@ -855,12 +911,18 @@
       </div>
 
       <div class="top-bar-right">
-        <button class="icon-btn" onclick="createNewSession()" aria-label="New Chat">
-          <!-- Premium Edit/Compose Icon -->
-          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+        <!-- Voice Companion Toggle Button -->
+        <button class="icon-btn" id="voiceToggleBtn" onclick="toggleVoiceMode()" aria-label="Voice Companion Mode">
+          <svg id="headsetIcon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+          <svg id="closeVoiceIcon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
     </header>
+
+    <!-- Voice Mode Overlay (Live Captions) -->
+    <div class="voice-overlay" id="voiceOverlay">
+      <div class="voice-captions" id="voiceCaptions">Initializing connection...</div>
+    </div>
 
     <!-- PWA Install Button Pill Below Header -->
     <div class="install-pill-container" id="installPillContainer">
@@ -873,13 +935,13 @@
     <section class="chat-box" id="chatBox" aria-live="polite"></section>
 
     <!-- Floating Action Input Box -->
-    <footer class="input-container">
+    <footer class="input-container" id="inputContainer">
       <div class="input-box">
         <!-- Textarea placeholder optimized for space -->
         <textarea id="userInput" rows="1" placeholder="Say something..." aria-label="Message Input" onkeydown="handleKeyDown(event)" oninput="handleTyping()"></textarea>
         
         <!-- Premium Frosted Mic Button -->
-        <button class="action-btn mic-btn" id="micBtn" onclick="toggleSpeechRecognition()" aria-label="Voice Input">
+        <button class="action-btn mic-btn" id="micBtn" onclick="toggleStandardMic()" aria-label="Voice Input">
           <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
         </button>
 
@@ -924,7 +986,7 @@
     let currentColorA = new THREE.Color(0x3a3a4a);
     let currentColorB = new THREE.Color(0x1e1e24);
     
-    // Advanced Physics Targets (Now includes Pulse Speed & Y-Axis Floating)
+    // Advanced Physics Targets
     let targetDistortion = 0.4;
     let currentDistortion = 0.4;
     let targetSpeed = 0.5;
@@ -944,16 +1006,16 @@
     const moodPalettes = {
         "neutral":     { a: 0x3a3a4a, b: 0x222233, distortion: 0.3, speed: 0.3, rotSpeed: 0.002, scale: 1.0, pulse: 0.0, pSpeed: 0.0, yOff: -0.2 },
         "calm":        { a: 0x2b5876, b: 0x4e4376, distortion: 0.2, speed: 0.2, rotSpeed: 0.001, scale: 0.9, pulse: 0.02, pSpeed: 0.002, yOff: -0.2 },
-        "happy":       { a: 0xffd194, b: 0x70e1f5, distortion: 0.6, speed: 0.8, rotSpeed: 0.005, scale: 1.15, pulse: 0.05, pSpeed: 0.008, yOff: 0.0 }, // Floats up
+        "happy":       { a: 0xffd194, b: 0x70e1f5, distortion: 0.6, speed: 0.8, rotSpeed: 0.005, scale: 1.15, pulse: 0.05, pSpeed: 0.008, yOff: 0.0 }, 
         "hopeful":     { a: 0xa8ff78, b: 0x78ffd6, distortion: 0.4, speed: 0.5, rotSpeed: 0.004, scale: 1.05, pulse: 0.03, pSpeed: 0.005, yOff: -0.1 },
         "grateful":    { a: 0xfbd3e9, b: 0xbb377d, distortion: 0.3, speed: 0.4, rotSpeed: 0.003, scale: 1.0, pulse: 0.02, pSpeed: 0.004, yOff: -0.2 },
-        "motivated":   { a: 0xf9d423, b: 0xff4e50, distortion: 0.7, speed: 0.9, rotSpeed: 0.006, scale: 1.2, pulse: 0.06, pSpeed: 0.01, yOff: 0.1 }, // Floats up & beats
-        "anxious":     { a: 0xff4b2b, b: 0xff416c, distortion: 1.2, speed: 1.5, rotSpeed: 0.015, scale: 0.85, pulse: 0.15, pSpeed: 0.025, yOff: -0.3 }, // Low & jittery
+        "motivated":   { a: 0xf9d423, b: 0xff4e50, distortion: 0.7, speed: 0.9, rotSpeed: 0.006, scale: 1.2, pulse: 0.06, pSpeed: 0.01, yOff: 0.1 }, 
+        "anxious":     { a: 0xff4b2b, b: 0xff416c, distortion: 1.2, speed: 1.5, rotSpeed: 0.015, scale: 0.85, pulse: 0.15, pSpeed: 0.025, yOff: -0.3 }, 
         "panicked":    { a: 0xffa500, b: 0xd91e18, distortion: 2.5, speed: 2.5, rotSpeed: 0.035, scale: 1.4, pulse: 0.2, pSpeed: 0.04, yOff: -0.1 }, 
         "angry":       { a: 0x8a2387, b: 0xe94057, distortion: 1.8, speed: 1.8, rotSpeed: 0.018, scale: 1.3, pulse: 0.1, pSpeed: 0.02, yOff: 0.0 },
         "frustrated":  { a: 0xc31432, b: 0x240b36, distortion: 1.3, speed: 1.4, rotSpeed: 0.012, scale: 1.1, pulse: 0.08, pSpeed: 0.015, yOff: -0.2 },
-        "sad":         { a: 0x141e30, b: 0x243b55, distortion: 0.1, speed: 0.1, rotSpeed: 0.001, scale: 0.6, pulse: 0.01, pSpeed: 0.001, yOff: -0.5 }, // Sinks down
-        "grieving":    { a: 0x111111, b: 0x333333, distortion: 0.05, speed: 0.05, rotSpeed: 0.0005, scale: 0.5, pulse: 0.005, pSpeed: 0.0005, yOff: -0.6 }, // Smallest, lowest
+        "sad":         { a: 0x141e30, b: 0x243b55, distortion: 0.1, speed: 0.1, rotSpeed: 0.001, scale: 0.6, pulse: 0.01, pSpeed: 0.001, yOff: -0.5 }, 
+        "grieving":    { a: 0x111111, b: 0x333333, distortion: 0.05, speed: 0.05, rotSpeed: 0.0005, scale: 0.5, pulse: 0.005, pSpeed: 0.0005, yOff: -0.6 }, 
         "lonely":      { a: 0x4ca1af, b: 0xc4e0e5, distortion: 0.1, speed: 0.15, rotSpeed: 0.001, scale: 0.7, pulse: 0.01, pSpeed: 0.002, yOff: -0.4 }, 
         "exhausted":   { a: 0x5c258d, b: 0x4389a2, distortion: 0.1, speed: 0.05, rotSpeed: 0.0008, scale: 0.65, pulse: 0.02, pSpeed: 0.001, yOff: -0.5 }, 
         "overwhelmed": { a: 0x8e0e00, b: 0x1f1c18, distortion: 1.6, speed: 1.0, rotSpeed: 0.01, scale: 1.35, pulse: 0.12, pSpeed: 0.03, yOff: -0.1 }, 
@@ -973,7 +1035,6 @@
         camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
         camera.position.z = 6; 
 
-        // Advanced Vertex Shader
         const vertexShader = `
             uniform float uTime;
             uniform float uDistortion;
@@ -1041,7 +1102,6 @@
             }
         `;
 
-        // Advanced Fragment Shader with Fresnel Rim Lighting
         const fragmentShader = `
             uniform vec3 uColorA;
             uniform vec3 uColorB;
@@ -1141,10 +1201,17 @@
         targetDistortion = palette.distortion;
         targetSpeed = palette.speed;
         targetRotationSpeed = palette.rotSpeed;
-        targetScale = palette.scale;
         targetPulse = palette.pulse;
         targetPulseSpeed = palette.pSpeed;
-        targetYOffset = palette.yOff;
+        
+        // Override position and size if Voice Mode is active
+        if (window.isVoiceModeActive) {
+            targetScale = palette.scale * 1.5; 
+            targetYOffset = 0.0; // Dead center
+        } else {
+            targetScale = palette.scale;
+            targetYOffset = palette.yOff;
+        }
 
         // 2. Extract Glow & Sync UI CSS
         const r = (palette.b >> 16) & 255;
@@ -1168,7 +1235,7 @@
     }
   </script>
 
-  <!-- MAIN APPLICATION LOGIC -->
+  <!-- MAIN APPLICATION LOGIC & CONTINUOUS VOICE LOOP -->
   <script>
     let state = {
       sessions: {},
@@ -1177,22 +1244,31 @@
       lastAiMood: "neutral" 
     };
 
-    let speechRecognizer = null;
-    let isListening = false;
+    let standardSpeechRecognizer = null;
+    let voiceModeRecognizer = null;
+    let voiceSynth = window.speechSynthesis;
+    let isStandardListening = false;
     let deferredPrompt = null;
     let activeOverlayStack = [];
+    
+    // Voice Mode State Flags
+    window.isVoiceModeActive = false;
+    let voiceThinkingInterval = null;
 
     const INITIAL_WELCOME = "Hello! I am MindGuard-AI. How are you feeling today? You can share your mood, stress levels, or daily sleep quality.";
 
+    // Massive 29 Phrase Bank for Deep Processing Simulation
     const thinkingPhrases = [
-      "Analyzing emotional subtext...",
-      "Evaluating stress indicators...",
-      "Mapping cognitive frameworks...",
-      "Synthesizing psychological insights...",
-      "Processing tonal nuances...",
-      "Formulating empathetic response...",
-      "Generating actionable relief...",
-      "MindGuard-AI is almost ready..."
+      "Analyzing emotional subtext...", "Evaluating stress indicators...", "Mapping cognitive frameworks...",
+      "Synthesizing psychological insights...", "Processing tonal nuances...", "Formulating empathetic response...",
+      "Generating actionable relief...", "Cross-referencing behavioral patterns...", "Deepening context awareness...",
+      "Calibrating empathic resonance...", "Reviewing recent interactions...", "Structuring supportive guidance...",
+      "Aligning with wellness goals...", "Identifying cognitive distortions...", "Processing physiological cues...",
+      "Refining conversational flow...", "Preparing coping strategies...", "Consulting mindfulness techniques...",
+      "Evaluating stress indicators...", "Synthesizing linguistic markers...", "Isolating affective variables...",
+      "Quantifying sentiment weights...", "Balancing emotional load...", "Integrating empathetic logic...",
+      "Scanning for distress signals...", "Formulating validating response...", "Calculating relief trajectories...",
+      "Optimizing psychological safety...", "Finalizing cognitive framing..."
     ];
 
     function triggerHaptic(pattern = 15) {
@@ -1306,53 +1382,234 @@
       pushOverlayState('bottomSheet');
     }
 
+    // --- STANDARD SPEECH RECOGNITION (Input Box) ---
     function setupSpeechRecognition() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
         document.getElementById('micBtn').style.display = 'none';
+        document.getElementById('voiceToggleBtn').style.display = 'none';
         return;
       }
 
-      speechRecognizer = new SpeechRecognition();
-      speechRecognizer.continuous = false;
-      speechRecognizer.interimResults = false;
-      speechRecognizer.lang = 'en-US';
+      // Initialize Standard Recognizer
+      standardSpeechRecognizer = new SpeechRecognition();
+      standardSpeechRecognizer.continuous = false;
+      standardSpeechRecognizer.interimResults = false;
+      standardSpeechRecognizer.lang = 'en-US';
 
-      speechRecognizer.onstart = () => {
-        isListening = true;
+      standardSpeechRecognizer.onstart = () => {
+        isStandardListening = true;
         document.getElementById('micBtn').classList.add('listening');
         window.setMoodState("typing"); 
       };
 
-      speechRecognizer.onend = () => {
-        isListening = false;
+      standardSpeechRecognizer.onend = () => {
+        isStandardListening = false;
         document.getElementById('micBtn').classList.remove('listening');
         window.setMoodState(state.lastAiMood);
       };
 
-      speechRecognizer.onresult = (event) => {
+      standardSpeechRecognizer.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         const inputEl = document.getElementById('userInput');
         inputEl.value = (inputEl.value ? inputEl.value + ' ' : '') + transcript;
         autoResizeInput(inputEl);
       };
 
-      speechRecognizer.onerror = () => {
-        isListening = false;
+      standardSpeechRecognizer.onerror = () => {
+        isStandardListening = false;
         document.getElementById('micBtn').classList.remove('listening');
         window.setMoodState(state.lastAiMood);
       };
+      
+      // Initialize Continuous Voice Mode Recognizer
+      voiceModeRecognizer = new SpeechRecognition();
+      voiceModeRecognizer.continuous = false;
+      voiceModeRecognizer.interimResults = true; // Enables live subtitling
+      voiceModeRecognizer.lang = 'en-US';
+
+      voiceModeRecognizer.onstart = () => {
+        if (!window.isVoiceModeActive) return;
+        window.setMoodState("typing"); // Pulses the core while listening
+        document.getElementById('voiceCaptions').innerText = "Listening...";
+      };
+
+      voiceModeRecognizer.onresult = (event) => {
+        if (!window.isVoiceModeActive) return;
+        let interimTranscript = '';
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        const displayText = finalTranscript || interimTranscript;
+        if (displayText) document.getElementById('voiceCaptions').innerText = displayText;
+      };
+
+      voiceModeRecognizer.onend = () => {
+        if (!window.isVoiceModeActive) return;
+        const text = document.getElementById('voiceCaptions').innerText;
+        
+        // If the user actually said something, send it to the AI
+        if (text && text !== "Listening..." && text !== "Initializing connection..." && !thinkingPhrases.includes(text)) {
+          sendVoiceMessageToAI(text);
+        } else {
+          // If silence, just restart listening immediately
+          try { voiceModeRecognizer.start(); } catch(e) {}
+        }
+      };
     }
 
-    function toggleSpeechRecognition() {
+    function toggleStandardMic() {
       triggerHaptic();
-      if (!speechRecognizer) return;
-      if (isListening) {
-        speechRecognizer.stop();
+      if (!standardSpeechRecognizer) return;
+      if (isStandardListening) {
+        standardSpeechRecognizer.stop();
       } else {
-        speechRecognizer.start();
+        standardSpeechRecognizer.start();
       }
     }
+
+    // --- CONTINUOUS VOICE COMPANION MODE ---
+    function toggleVoiceMode() {
+      triggerHaptic([150, 100, 150, 100, 150]); // Distinct 3-pulse vibration
+      window.isVoiceModeActive = !window.isVoiceModeActive;
+      
+      const chatBox = document.getElementById('chatBox');
+      const inputContainer = document.getElementById('inputContainer');
+      const voiceOverlay = document.getElementById('voiceOverlay');
+      const headsetIcon = document.getElementById('headsetIcon');
+      const closeVoiceIcon = document.getElementById('closeVoiceIcon');
+
+      if (window.isVoiceModeActive) {
+        // Hide standard UI
+        chatBox.style.opacity = '0';
+        chatBox.style.pointerEvents = 'none';
+        inputContainer.style.opacity = '0';
+        inputContainer.style.pointerEvents = 'none';
+        
+        // Show Voice Overlay
+        voiceOverlay.classList.add('active');
+        headsetIcon.style.display = 'none';
+        closeVoiceIcon.style.display = 'block';
+        
+        // Force 3D Engine to re-evaluate and center the object
+        window.setMoodState(state.lastAiMood);
+        
+        // Stop standard mic if active, start voice mode mic
+        if (isStandardListening && standardSpeechRecognizer) standardSpeechRecognizer.stop();
+        document.getElementById('voiceCaptions').innerText = "Initializing connection...";
+        setTimeout(() => {
+            if (window.isVoiceModeActive && voiceModeRecognizer) {
+                try { voiceModeRecognizer.start(); } catch(e) {}
+            }
+        }, 800);
+
+      } else {
+        // Revert to Standard UI
+        chatBox.style.opacity = '1';
+        chatBox.style.pointerEvents = 'auto';
+        inputContainer.style.opacity = '1';
+        inputContainer.style.pointerEvents = 'auto';
+        
+        voiceOverlay.classList.remove('active');
+        headsetIcon.style.display = 'block';
+        closeVoiceIcon.style.display = 'none';
+        
+        // Stop continuous loops
+        if (voiceModeRecognizer) voiceModeRecognizer.stop();
+        if (voiceSynth.speaking) voiceSynth.cancel();
+        clearInterval(voiceThinkingInterval);
+        
+        // Reset 3D position
+        window.setMoodState(state.lastAiMood);
+        renderCurrentChat(); // Ensure chat is updated with voice transcriptions
+      }
+    }
+
+    async function sendVoiceMessageToAI(text) {
+      if (!window.isVoiceModeActive) return;
+      
+      const activeSession = state.sessions[state.currentSessionId];
+      activeSession.history.push({ role: 'user', parts: [{ text }] });
+      saveStateToStorage();
+      
+      window.setMoodState("thinking");
+      startVoiceThinkingAnimation();
+
+      try {
+        const response = await fetch('https://project-9uo5.onrender.com/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ history: activeSession.history })
+        });
+
+        const data = await response.json();
+        clearInterval(voiceThinkingInterval);
+
+        if (!window.isVoiceModeActive) return; // Prevent action if user exited
+
+        if (data.text) {
+          if (data.mood) {
+              state.lastAiMood = data.mood;
+              window.setMoodState(data.mood);
+          } else {
+              state.lastAiMood = "neutral";
+              window.setMoodState("neutral");
+          }
+          
+          document.getElementById('voiceCaptions').innerText = data.text;
+          activeSession.history.push({ role: 'model', parts: [{ text: data.text }] });
+          saveStateToStorage();
+          
+          speakVoiceResponse(data.text);
+        }
+      } catch (err) {
+        clearInterval(voiceThinkingInterval);
+        document.getElementById('voiceCaptions').innerText = "Network error. Reconnecting...";
+        setTimeout(() => { 
+            if(window.isVoiceModeActive && voiceModeRecognizer) {
+                try { voiceModeRecognizer.start(); } catch(e) {}
+            }
+        }, 2000);
+      }
+    }
+
+    function speakVoiceResponse(text) {
+       if (voiceSynth.speaking) voiceSynth.cancel();
+       const utterance = new SpeechSynthesisUtterance(text);
+       utterance.onend = () => {
+         if (window.isVoiceModeActive) {
+           // Restart listening the millisecond the AI stops talking
+           setTimeout(() => { 
+               if(voiceModeRecognizer) {
+                   try { voiceModeRecognizer.start(); } catch(e) {}
+               }
+           }, 100);
+         }
+       };
+       voiceSynth.speak(utterance);
+    }
+
+    function startVoiceThinkingAnimation() {
+      const caption = document.getElementById('voiceCaptions');
+      let idx = 0;
+      caption.innerText = thinkingPhrases[0];
+      clearInterval(voiceThinkingInterval);
+      
+      voiceThinkingInterval = setInterval(() => {
+        caption.style.opacity = 0;
+        setTimeout(() => {
+          idx = (idx + 1) % thinkingPhrases.length;
+          caption.innerText = thinkingPhrases[idx];
+          caption.style.opacity = 1;
+        }, 400); // 400ms fade down
+      }, 2500); // cycle every 2.5 seconds
+    }
+
 
     function loadStateFromStorage() {
       const savedSessions = localStorage.getItem('mg_sessions');
