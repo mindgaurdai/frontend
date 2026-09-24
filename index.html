@@ -12,47 +12,52 @@
   <meta name="theme-color" id="metaThemeColor" content="#121212">
   <meta name="description" content="AI that detects wellbeing changes before they become crises.">
 
+  <!-- Load Three.js from CDN for the 3D Background -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
   <style>
     /* CSS Variables for Dynamic System Dark / Light Theme (Powerful Gray Palette) */
     :root {
-      --bg-main: #121212;
-      --bg-card: #1e1e1e;
-      --bg-sidebar: #0a0a0a;
-      --border-color: #333333;
+      /* Made bg-main semi-transparent to show the 3D canvas behind it */
+      --bg-main: rgba(18, 18, 18, 0.4); 
+      --bg-card: rgba(30, 30, 30, 0.85);
+      --bg-sidebar: rgba(10, 10, 10, 0.95);
+      --border-color: rgba(51, 51, 51, 0.6);
       --text-main: #e4e4e7;
       --text-sub: #a1a1aa;
       --accent: #52525b;
       --accent-hover: #71717a;
-      --user-msg: #3f3f46;
-      --ai-msg: #1e1e1e;
-      --input-bg: #1e1e1e;
+      --user-msg: rgba(63, 63, 70, 0.9);
+      --ai-msg: rgba(30, 30, 30, 0.9);
+      --input-bg: rgba(30, 30, 30, 0.85);
       --overlay-bg: rgba(0, 0, 0, 0.7);
-      --shimmer-1: #1e1e1e;
-      --shimmer-2: #333333;
+      --shimmer-1: rgba(30, 30, 30, 0.5);
+      --shimmer-2: rgba(51, 51, 51, 0.5);
       --shadow: rgba(0, 0, 0, 0.4);
       --danger: #ef4444;
       --danger-hover: #dc2626;
-      --blur-bg: rgba(18, 18, 18, 0.75); /* Added for input blur */
+      --blur-bg: rgba(18, 18, 18, 0.65);
     }
 
     /* Light Mode Overrides (Powerful Light Gray Palette) */
     body.light-mode {
-      --bg-main: #f4f4f5;
-      --bg-card: #ffffff;
-      --bg-sidebar: #e4e4e7;
-      --border-color: #d4d4d8;
+      /* Semi-transparent light background */
+      --bg-main: rgba(244, 244, 245, 0.4);
+      --bg-card: rgba(255, 255, 255, 0.85);
+      --bg-sidebar: rgba(228, 228, 231, 0.95);
+      --border-color: rgba(212, 212, 216, 0.6);
       --text-main: #18181b;
       --text-sub: #52525b;
       --accent: #3f3f46;
       --accent-hover: #27272a;
-      --user-msg: #52525b;
-      --ai-msg: #ffffff;
-      --input-bg: #ffffff;
+      --user-msg: rgba(82, 82, 91, 0.9);
+      --ai-msg: rgba(255, 255, 255, 0.9);
+      --input-bg: rgba(255, 255, 255, 0.85);
       --overlay-bg: rgba(24, 24, 27, 0.5);
-      --shimmer-1: #e4e4e7;
-      --shimmer-2: #f4f4f5;
+      --shimmer-1: rgba(228, 228, 231, 0.5);
+      --shimmer-2: rgba(244, 244, 245, 0.5);
       --shadow: rgba(0, 0, 0, 0.1);
-      --blur-bg: rgba(244, 244, 245, 0.75); /* Added for input blur */
+      --blur-bg: rgba(244, 244, 245, 0.65);
     }
 
     * { 
@@ -63,13 +68,23 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    /* WebGL Canvas Background */
+    #webgl-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1; /* Place behind everything */
+      pointer-events: none; /* Let clicks pass through to the UI */
+    }
+
     html, body {
-      /* Prevents mobile browser overscroll/rubber-banding (far back view fix) */
       overscroll-behavior-y: none;
-      background-color: var(--bg-main);
+      background-color: transparent; /* Changed to transparent to see WebGL */
       color: var(--text-main);
       width: 100%;
-      height: 100dvh; /* Dynamic Viewport Height fixes keyboard pushing layout out */
+      height: 100dvh;
       position: absolute;
       top: 0;
       left: 0;
@@ -78,14 +93,14 @@
 
     body {
       display: flex;
-      transition: background-color 0.25s, color 0.25s;
+      transition: color 0.25s;
     }
 
     /* Custom Webkit Scrollbars for Professional Look */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
-      display: none; /* Hide for cleaner native app look based on previous implementation */
+      display: none; 
     }
     ::-webkit-scrollbar-track {
       background: transparent;
@@ -122,6 +137,7 @@
     .sidebar {
       width: 300px;
       background-color: var(--bg-sidebar);
+      backdrop-filter: blur(20px);
       border-right: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
@@ -153,7 +169,7 @@
 
     .sidebar-header {
       padding: 18px 16px;
-      border-bottom: none; /* Border removed as requested */
+      border-bottom: none; 
       display: flex;
       align-items: center;
       gap: 12px;
@@ -262,11 +278,11 @@
       flex-direction: column;
       height: 100%;
       position: relative;
-      background: var(--bg-main);
-      padding-top: 60px; /* Offset for absolute top-bar */
+      background: var(--bg-main); /* Now semi-transparent */
+      padding-top: 60px;
     }
 
-    /* Top Navigation Header - UPDATED FOR NATIVE ABSOLUTE POSITIONING */
+    /* Top Navigation Header */
     .top-bar {
       position: absolute;
       top: 0;
@@ -274,11 +290,13 @@
       right: 0;
       height: 60px;
       padding: 0 16px;
-      border-bottom: none; /* Border removed as requested */
+      border-bottom: none; 
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: var(--bg-main);
+      background: transparent; /* Let glass effect show */
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       z-index: 50;
       flex-shrink: 0;
     }
@@ -329,24 +347,24 @@
       font-size: 1.1rem;
       font-weight: 700;
       color: var(--accent);
+      text-shadow: 0 1px 4px rgba(0,0,0,0.2); /* Added shadow for visibility over 3D */
     }
 
     /* PWA Install Pill Container */
     .install-pill-container {
       position: absolute;
-      top: 66px; /* Just below header */
+      top: 66px; 
       left: 0;
       right: 0;
       display: flex;
       justify-content: center;
-      z-index: 45; /* Under modals/sidebar but above chat */
-      pointer-events: none; /* Ensures clicks pass through container to chat box */
+      z-index: 45; 
+      pointer-events: none; 
     }
 
-    /* PWA Install Pill */
     .install-pill {
       display: none;
-      pointer-events: auto; /* Restores clickability on the pill itself */
+      pointer-events: auto; 
       align-items: center;
       gap: 6px;
       background: var(--accent);
@@ -365,7 +383,7 @@
       background: var(--accent-hover);
     }
 
-    /* Chat Messages Window - UPDATED INDEPENDENT SCROLL ZONE */
+    /* Chat Messages Window */
     .chat-box {
       flex: 1;
       overflow-y: auto;
@@ -378,10 +396,9 @@
       margin: 0 auto;
       scroll-behavior: smooth;
       -webkit-overflow-scrolling: touch;
-      transform: translateZ(0); /* Hardware acceleration */
+      transform: translateZ(0); 
     }
     
-    /* NEW: Message Wrapper to handle actions alignment */
     .message-wrapper {
       display: flex;
       flex-direction: column;
@@ -398,7 +415,9 @@
       font-size: 0.95rem;
       word-wrap: break-word;
       white-space: pre-wrap;
-      box-shadow: 0 2px 6px var(--shadow);
+      box-shadow: 0 4px 15px var(--shadow);
+      backdrop-filter: blur(12px); /* Glassmorphism for bubbles */
+      -webkit-backdrop-filter: blur(12px);
       user-select: text !important;
       -webkit-user-select: text !important;
     }
@@ -407,6 +426,7 @@
       background-color: var(--user-msg);
       color: #ffffff;
       border-bottom-right-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.1);
     }
 
     .message.ai {
@@ -416,7 +436,6 @@
       border: 1px solid var(--border-color);
     }
     
-    /* NEW: Message Action Buttons (Copy & Speak) */
     .message-actions {
       display: flex;
       gap: 8px;
@@ -424,7 +443,8 @@
       padding: 0 4px;
     }
     .msg-action-icon {
-      background: none;
+      background: rgba(0,0,0,0.2);
+      backdrop-filter: blur(4px);
       border: none;
       color: var(--text-sub);
       cursor: pointer;
@@ -445,7 +465,7 @@
       fill: currentColor;
     }
 
-    /* Gemini Thinking Loader - UPDATED FOR NATIVE SPINNER */
+    /* Gemini Thinking Loader */
     .thinking-container {
       align-self: flex-start;
       display: flex;
@@ -453,15 +473,17 @@
       gap: 15px;
       max-width: 320px;
       padding: 10px 18px;
-      background-color: transparent;
-      border: none;
+      background-color: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 15px var(--shadow);
     }
 
     .thinking-header {
       font-size: 0.9rem;
       color: var(--text-main);
       font-weight: 500;
-      /* removed pulsing text animation to make it cleaner while changing text */
       transition: opacity 0.3s ease;
     }
     
@@ -480,29 +502,18 @@
     @keyframes spin { 100% { transform: rotate(360deg); } }
     @keyframes pulse-logo { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 
-    /* Maintained original shimmer CSS just in case */
-    .shimmer-line {
-      height: 10px;
-      width: 100%;
-      border-radius: 6px;
-      background: linear-gradient(90deg, var(--shimmer-1) 25%, var(--shimmer-2) 50%, var(--shimmer-1) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-    }
-    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-    /* Floating Input Box - UPDATED BOTTOM ANCHOR AND SAFE AREA */
+    /* Floating Input Box */
     .input-container {
       padding: 12px 16px;
-      padding-bottom: calc(12px + env(safe-area-inset-bottom)); /* Fixed native safe area padding */
+      padding-bottom: calc(12px + env(safe-area-inset-bottom)); 
       max-width: 800px;
       width: 100%;
       margin: 0 auto;
       margin-top: auto;
-      background: var(--blur-bg); /* Changed for glassmorphism blur effect */
-      backdrop-filter: blur(12px); /* Added Blur */
-      -webkit-backdrop-filter: blur(12px); /* Added Blur Safari */
-      z-index: 50; /* Changed from 1000 to sit below overlays */
+      background: var(--blur-bg); 
+      backdrop-filter: blur(20px); 
+      -webkit-backdrop-filter: blur(20px); 
+      z-index: 50; 
       flex-shrink: 0;
     }
 
@@ -515,7 +526,7 @@
       padding: 8px 12px 8px 18px;
       box-shadow: 0 4px 16px var(--shadow);
       gap: 8px;
-      margin-bottom: 15px; /* Added 15px Bottom Margin above keyboard */
+      margin-bottom: 15px; 
       transition: all 0.3s ease;
     }
     
@@ -557,12 +568,6 @@
     .action-btn:hover {
       color: var(--text-main);
       background: var(--bg-main);
-    }
-
-    .action-btn svg {
-      width: 20px;
-      height: 20px;
-      fill: currentColor;
     }
 
     .action-btn.listening {
@@ -608,6 +613,7 @@
       right: 0;
       bottom: 0;
       background: var(--bg-card);
+      backdrop-filter: blur(20px);
       border-top-left-radius: 20px;
       border-top-right-radius: 20px;
       border-top: 1px solid var(--border-color);
@@ -660,7 +666,7 @@
     }
 
     .sheet-option.danger:hover {
-      background: rgba(239, 68, 68, 0.1);
+      background: rgba(239, 68, 68, 0.2);
     }
 
     /* Custom Rename Modal */
@@ -686,6 +692,7 @@
 
     .rename-modal {
       background: var(--bg-card);
+      backdrop-filter: blur(20px);
       border: 1px solid var(--border-color);
       border-radius: 16px;
       padding: 20px;
@@ -756,6 +763,9 @@
 </head>
 <body>
 
+  <!-- WebGL 3D Background Canvas -->
+  <canvas id="webgl-canvas"></canvas>
+
   <!-- Mobile Sidebar Overlay -->
   <div class="sidebar-overlay" id="sidebarOverlay" aria-label="Close sidebar" onclick="closeAllOverlays()"></div>
 
@@ -807,7 +817,7 @@
     <!-- Floating Action Input Box -->
     <footer class="input-container">
       <div class="input-box">
-        <textarea id="userInput" rows="1" placeholder="Share your mood or thoughts..." aria-label="Message Input" onkeydown="handleKeyDown(event)"></textarea>
+        <textarea id="userInput" rows="1" placeholder="Share your mood or thoughts..." aria-label="Message Input" onkeydown="handleKeyDown(event)" oninput="handleTyping()"></textarea>
         
         <!-- Web Speech Recognition Mic Button -->
         <button class="action-btn" id="micBtn" onclick="toggleSpeechRecognition()" aria-label="Voice Input">
@@ -846,6 +856,210 @@
     </div>
   </div>
 
+  <!-- MOOD RESPONSIVE 3D BACKGROUND ENGINE (THREE.JS) -->
+  <script>
+    // 3D Engine Variables
+    let scene, camera, renderer, blobMesh, uniforms;
+    let targetColorA = new THREE.Color(0x3a3a4a); // Default Neutral Dark Gray/Blue
+    let targetColorB = new THREE.Color(0x1e1e24);
+    let currentColorA = new THREE.Color(0x3a3a4a);
+    let currentColorB = new THREE.Color(0x1e1e24);
+    let targetDistortion = 0.4;
+    let currentDistortion = 0.4;
+    let targetSpeed = 0.5;
+    let currentSpeed = 0.5;
+    
+    // Mood Color Palettes
+    const moodPalettes = {
+        "neutral":  { a: 0x3a3a4a, b: 0x1e1e24, distortion: 0.3, speed: 0.3 },
+        "calm":     { a: 0x2b5876, b: 0x4e4376, distortion: 0.2, speed: 0.2 },
+        "happy":    { a: 0xffd194, b: 0x70e1f5, distortion: 0.6, speed: 0.8 },
+        "anxious":  { a: 0xff4b2b, b: 0xff416c, distortion: 1.2, speed: 1.5 },
+        "angry":    { a: 0x8a2387, b: 0xe94057, distortion: 1.5, speed: 1.8 },
+        "sad":      { a: 0x141e30, b: 0x243b55, distortion: 0.1, speed: 0.1 },
+        "thinking": { a: 0x8e2de2, b: 0x4a00e0, distortion: 0.8, speed: 1.2 }, // API Loading State
+        "typing":   { a: 0x00c6ff, b: 0x0072ff, distortion: 0.5, speed: 0.7 }  // Active Input State
+    };
+
+    function init3DBackground() {
+        const canvas = document.getElementById('webgl-canvas');
+        renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.z = 5;
+
+        // Custom GLSL Shaders directly inline
+        const vertexShader = `
+            uniform float uTime;
+            uniform float uDistortion;
+            uniform float uSpeed;
+            varying vec2 vUv;
+            varying vec3 vNormal;
+
+            // Simple 3D noise function
+            vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+            vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+
+            float snoise(vec3 v) { 
+                const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
+                const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
+                vec3 i  = floor(v + dot(v, C.yyy) );
+                vec3 x0 = v - i + dot(i, C.xxx) ;
+                vec3 g = step(x0.yzx, x0.xyz);
+                vec3 l = 1.0 - g;
+                vec3 i1 = min( g.xyz, l.zxy );
+                vec3 i2 = max( g.xyz, l.zxy );
+                vec3 x1 = x0 - i1 + C.xxx;
+                vec3 x2 = x0 - i2 + C.yyy;
+                vec3 x3 = x0 - D.yyy;
+                i = mod289(i); 
+                vec4 p = permute( permute( permute( 
+                            i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
+                          + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) 
+                          + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
+                float n_ = 0.142857142857;
+                vec3  ns = n_ * D.wyz - D.xzx;
+                vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+                vec4 x_ = floor(j * ns.z);
+                vec4 y_ = floor(j - 7.0 * x_ );
+                vec4 x = x_ *ns.x + ns.yyyy;
+                vec4 y = y_ *ns.x + ns.yyyy;
+                vec4 h = 1.0 - abs(x) - abs(y);
+                vec4 b0 = vec4( x.xy, y.xy );
+                vec4 b1 = vec4( x.zw, y.zw );
+                vec4 s0 = floor(b0)*2.0 + 1.0;
+                vec4 s1 = floor(b1)*2.0 + 1.0;
+                vec4 sh = -step(h, vec4(0.0));
+                vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
+                vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
+                vec3 p0 = vec3(a0.xy,h.x);
+                vec3 p1 = vec3(a0.zw,h.y);
+                vec3 p2 = vec3(a1.xy,h.z);
+                vec3 p3 = vec3(a1.zw,h.w);
+                vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+                p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+                vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+                m = m * m;
+                return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3) ) );
+            }
+
+            void main() {
+                vUv = uv;
+                vNormal = normal;
+                
+                vec3 pos = position;
+                // Add noise based on time, position, and speed/distortion uniforms
+                float noise = snoise(vec3(pos.x * 2.0, pos.y * 2.0, pos.z * 2.0 + (uTime * uSpeed)));
+                pos += normal * noise * uDistortion;
+                
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+        `;
+
+        const fragmentShader = `
+            uniform vec3 uColorA;
+            uniform vec3 uColorB;
+            uniform float uTime;
+            varying vec2 vUv;
+            varying vec3 vNormal;
+
+            void main() {
+                // Mix colors based on UVs and Normal vector to create an iridescent glow
+                float mixStrength = dot(vNormal, vec3(0.5, 0.5, 1.0)) * 0.5 + 0.5;
+                mixStrength += sin(vUv.y * 10.0 + uTime) * 0.1;
+                
+                vec3 finalColor = mix(uColorA, uColorB, clamp(mixStrength, 0.0, 1.0));
+                
+                // Add a slight vignette/glow to the edges
+                float glow = pow(1.0 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
+                finalColor += vec3(glow * 0.2);
+
+                gl_FragColor = vec4(finalColor, 0.8); // 0.8 alpha to blend slightly with CSS background
+            }
+        `;
+
+        uniforms = {
+            uTime: { value: 0 },
+            uDistortion: { value: currentDistortion },
+            uSpeed: { value: currentSpeed },
+            uColorA: { value: currentColorA },
+            uColorB: { value: currentColorB }
+        };
+
+        const geometry = new THREE.IcosahedronGeometry(2, 64);
+        const material = new THREE.ShaderMaterial({
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader,
+            uniforms: uniforms,
+            wireframe: false,
+            transparent: true
+        });
+
+        blobMesh = new THREE.Mesh(geometry, material);
+        // Position slightly off-center for aesthetic
+        blobMesh.position.set(1.5, -0.5, 0); 
+        scene.add(blobMesh);
+
+        window.addEventListener('resize', onWindowResize, false);
+        animate3D();
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate3D(time) {
+        requestAnimationFrame(animate3D);
+        
+        // Update time uniform
+        uniforms.uTime.value = time * 0.001;
+
+        // Smoothly interpolate current colors and states to target mood states
+        currentColorA.lerp(targetColorA, 0.02);
+        currentColorB.lerp(targetColorB, 0.02);
+        currentDistortion += (targetDistortion - currentDistortion) * 0.02;
+        currentSpeed += (targetSpeed - currentSpeed) * 0.02;
+
+        uniforms.uColorA.value = currentColorA;
+        uniforms.uColorB.value = currentColorB;
+        uniforms.uDistortion.value = currentDistortion;
+        uniforms.uSpeed.value = currentSpeed;
+        
+        // Gentle rotation
+        blobMesh.rotation.y += 0.002;
+        blobMesh.rotation.x += 0.001;
+
+        renderer.render(scene, camera);
+    }
+
+    // Global function to trigger mood shift from standard UI logic
+    window.setMoodState = function(moodName) {
+        const palette = moodPalettes[moodName] || moodPalettes["neutral"];
+        targetColorA.setHex(palette.a);
+        targetColorB.setHex(palette.b);
+        targetDistortion = palette.distortion;
+        targetSpeed = palette.speed;
+    };
+
+    // Trigger typing state
+    let typingTimer;
+    function handleTyping() {
+        window.setMoodState("typing");
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+            window.setMoodState("neutral");
+        }, 1500);
+    }
+  </script>
+
+  <!-- MAIN APPLICATION LOGIC -->
   <script>
     // System State Engine
     let state = {
@@ -861,7 +1075,6 @@
 
     const INITIAL_WELCOME = "Hello! I am MindGuard-AI. How are you feeling today? You can share your mood, stress levels, or daily sleep quality.";
 
-    // --- NEW: AI Dynamic Processing Phrases ---
     const thinkingPhrases = [
       "Analyzing mood patterns...",
       "Evaluating stress indicators...",
@@ -871,40 +1084,27 @@
       "Consulting cognitive frameworks...",
       "Formulating empathetic response...",
       "Generating actionable advice...",
-      "Aligning with wellness goals...",
-      "Structuring supportive guidance...",
-      "Calibrating tone and empathy...",
-      "Identifying cognitive distortions...",
-      "Reflecting on recent interactions...",
-      "Preparing coping strategies...",
-      "Deepening context awareness...",
-      "Evaluating mindfulness techniques...",
-      "Cross-referencing psychological models...",
-      "Refining conversational flow...",
-      "Finalizing response logic...",
       "MindGuard-AI is almost ready..."
     ];
 
-    // --- NEW: Global Haptic Feedback Helper ---
     function triggerHaptic(pattern = 15) {
       if (navigator.vibrate) {
         navigator.vibrate(pattern);
       }
     }
 
-    // --- 1. System Initialization & Theme Handler ---
     window.addEventListener('DOMContentLoaded', () => {
+      init3DBackground(); // Initialize the 3D Background Engine
       loadStateFromStorage();
       setupSystemThemeEngine();
       registerPWA();
       setupSpeechRecognition();
       setupHistoryBackHandler();
-      setupViewportLock(); // NEW: Keyboard mobile fix
+      setupViewportLock(); 
       renderSidebar();
       renderCurrentChat();
     });
 
-    // --- NEW: Viewport Mobile Lock (Keyboard Fixes) ---
     function setupViewportLock() {
       function lockViewportAndHeader() {
           const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -929,7 +1129,6 @@
       });
     }
 
-    // Automatic System Default Theme Syncing
     function setupSystemThemeEngine() {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       
@@ -941,19 +1140,12 @@
           metaTheme.setAttribute('content', isDark ? '#121212' : '#f4f4f5');
         }
       };
-
-      // Initial Sync
       applySystemTheme(mediaQuery);
-
-      // Listen for runtime System Theme Switch
       mediaQuery.addEventListener('change', applySystemTheme);
     }
 
-    // --- 2. Mobile Hardware Back Button Support (History API Fixed) ---
     function setupHistoryBackHandler() {
-      // Ensure base state exists so backing out of overlays doesn't exit the app
       window.history.replaceState({ root: true }, '');
-
       window.addEventListener('popstate', (e) => {
         if (activeOverlayStack.length > 0) {
           const topOverlay = activeOverlayStack.pop();
@@ -970,9 +1162,7 @@
     function closeAllOverlays() {
       const stackSize = activeOverlayStack.length;
       if (stackSize > 0) {
-        // Go back safely in history to pop the virtual routes
         window.history.go(-stackSize);
-        // Clear UI states synchronously
         activeOverlayStack.forEach(overlay => closeOverlayUI(overlay));
         activeOverlayStack = [];
       }
@@ -1006,7 +1196,6 @@
       pushOverlayState('bottomSheet');
     }
 
-    // --- 3. Speech Recognition Engine ---
     function setupSpeechRecognition() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
@@ -1022,11 +1211,13 @@
       speechRecognizer.onstart = () => {
         isListening = true;
         document.getElementById('micBtn').classList.add('listening');
+        window.setMoodState("typing"); // Trigger visual shift when speaking
       };
 
       speechRecognizer.onend = () => {
         isListening = false;
         document.getElementById('micBtn').classList.remove('listening');
+        window.setMoodState("neutral");
       };
 
       speechRecognizer.onresult = (event) => {
@@ -1039,6 +1230,7 @@
       speechRecognizer.onerror = () => {
         isListening = false;
         document.getElementById('micBtn').classList.remove('listening');
+        window.setMoodState("neutral");
       };
     }
 
@@ -1052,7 +1244,6 @@
       }
     }
 
-    // --- 4. Multi-Session Management (LocalStorage) ---
     function loadStateFromStorage() {
       const savedSessions = localStorage.getItem('mg_sessions');
       const savedActiveId = localStorage.getItem('mg_active_id');
@@ -1069,9 +1260,6 @@
     }
 
     function saveStateToStorage() {
-      // FIX: Memory and Storage Limit Enforcement
-      // Keeps the app perfectly fast and avoids Chrome's 5MB LocalStorage limit
-      // by capping every single chat conversation to the 100 most recent messages.
       Object.values(state.sessions).forEach(session => {
         if (session.history.length > 100) {
           session.history = session.history.slice(-100);
@@ -1099,6 +1287,7 @@
         renderSidebar();
         renderCurrentChat();
         closeAllOverlays();
+        window.setMoodState("neutral"); // Reset background
       }
     }
 
@@ -1110,10 +1299,11 @@
       renderSidebar();
       renderCurrentChat();
       closeAllOverlays();
+      window.setMoodState("neutral");
     }
 
     function triggerDeleteSession() {
-      triggerHaptic([30, 50, 30]); // Distinct pattern for delete action
+      triggerHaptic([30, 50, 30]); 
       const id = state.selectedTargetSessionId;
       if (!id || !state.sessions[id]) return;
 
@@ -1185,7 +1375,6 @@
     function renderCurrentChat() {
       const chatBox = document.getElementById('chatBox');
       
-      // FIX: Disable smooth scrolling temporarily to prevent top-to-bottom scroll effect on initial page load
       chatBox.style.scrollBehavior = 'auto';
       chatBox.innerHTML = '';
 
@@ -1194,17 +1383,22 @@
 
       activeSession.history.forEach(msg => {
         const type = msg.role === 'model' ? 'ai' : 'user';
-        appendMessageUI(msg.parts[0].text, type);
+        // Extract text if the object was saved as a JSON string from the new API
+        let textContent = msg.parts[0].text;
+        try {
+            const parsed = JSON.parse(textContent);
+            if (parsed.text) textContent = parsed.text;
+        } catch (e) {} // Not JSON, keep original
+
+        appendMessageUI(textContent, type);
       });
       
-      // FIX: Force scroll to bottom instantly, then safely restore smooth scrolling for new messages
       chatBox.scrollTop = chatBox.scrollHeight;
       setTimeout(() => {
           chatBox.style.scrollBehavior = 'smooth';
       }, 50);
     }
 
-    // --- 5. Messaging Engine & Backend Connectivity ---
     async function sendMessage() {
       triggerHaptic();
       const inputEl = document.getElementById('userInput');
@@ -1216,18 +1410,17 @@
 
       const activeSession = state.sessions[state.currentSessionId];
       
-      // Auto-title conversation on first prompt
       if (activeSession.history.length <= 1) {
         activeSession.title = text.length > 22 ? text.substring(0, 22) + '...' : text;
         renderSidebar();
       }
 
-      // Add User Message UI
       appendMessageUI(text, 'user');
       activeSession.history.push({ role: 'user', parts: [{ text }] });
       saveStateToStorage();
 
-      // Show Gemini Thinking Loader with dynamic text
+      // Trigger 3D Background "Thinking" State
+      window.setMoodState("thinking");
       const thinkingEl = showThinkingAnimation();
 
       try {
@@ -1238,26 +1431,35 @@
         });
 
         const data = await response.json();
-        
-        // This instantly removes the element and automatically stops the text cycle interval
         thinkingEl.remove(); 
 
         if (response.status === 429) {
           appendMessageUI(data.error || "Rate limit exceeded. Please wait a minute.", 'ai');
+          window.setMoodState("neutral");
         } else if (data.text) {
+          
+          // Apply 3D Background Mood Update from API!
+          if (data.mood) {
+              window.setMoodState(data.mood);
+          } else {
+              window.setMoodState("neutral");
+          }
+
           appendMessageUI(data.text, 'ai');
+          // Save the clean text in history, avoiding stringified JSON accumulation
           activeSession.history.push({ role: 'model', parts: [{ text: data.text }] });
           saveStateToStorage();
         } else {
           appendMessageUI("Unable to process response at this time.", 'ai');
+          window.setMoodState("neutral");
         }
       } catch (err) {
         thinkingEl.remove();
         appendMessageUI("Network error: Failed to connect to MindGuard engine.", 'ai');
+        window.setMoodState("neutral");
       }
     }
 
-    // --- NEW: Appending Message UI with Action Tools Structure ---
     function appendMessageUI(text, sender) {
       const chatBox = document.getElementById('chatBox');
       
@@ -1268,14 +1470,12 @@
       msgDiv.classList.add('message', sender);
       msgDiv.innerText = text;
       
-      // Add double tap to copy functionality globally 
       msgDiv.addEventListener('dblclick', () => {
          navigator.clipboard.writeText(text);
       });
       
       wrapperDiv.appendChild(msgDiv);
       
-      // Inject Native Tools for AI responses
       if (sender === 'ai') {
         const actionsDiv = document.createElement('div');
         actionsDiv.classList.add('message-actions');
@@ -1299,7 +1499,6 @@
       return msgDiv;
     }
     
-    // --- NEW: Copy & Speak Interactions ---
     window.copyMessageText = function(btn) {
        triggerHaptic(20);
        const wrapper = btn.closest('.message-wrapper');
@@ -1322,7 +1521,6 @@
        }
     };
 
-    // --- UPDATED: Dynamic Spinner Animation (Cycles phrases one by one) ---
     function showThinkingAnimation() {
       const chatBox = document.getElementById('chatBox');
       const container = document.createElement('div');
@@ -1337,23 +1535,20 @@
       `;
       chatBox.appendChild(container);
       
-      // Setup dynamic text cycling
       const dynamicTextEl = container.querySelector('#dynamicThinkingText');
       let phraseIndex = 0;
       
-      // Change text every 1.5 seconds smoothly
       const cycleInterval = setInterval(() => {
-          dynamicTextEl.style.opacity = 0; // Fade out
+          dynamicTextEl.style.opacity = 0; 
           
           setTimeout(() => {
               dynamicTextEl.innerText = thinkingPhrases[phraseIndex % thinkingPhrases.length];
-              dynamicTextEl.style.opacity = 1; // Fade in
+              dynamicTextEl.style.opacity = 1; 
               phraseIndex++;
-          }, 300); // Wait for fade out to complete before changing text
+          }, 300); 
           
       }, 1500); 
 
-      // Override container.remove() to securely stop the interval loop instantly when API responds
       const originalRemove = container.remove.bind(container);
       container.remove = () => {
           clearInterval(cycleInterval);
@@ -1367,7 +1562,6 @@
       return container;
     }
 
-    // --- 6. Utilities & Service Worker Registration ---
     function registerPWA() {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js')
