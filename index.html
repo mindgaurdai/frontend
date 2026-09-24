@@ -16,48 +16,44 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
   <style>
-    /* CSS Variables for Dynamic System Dark / Light Theme (Powerful Gray Palette) */
+    /* CSS Variables for Dynamic System Dark / Light Theme & 3D Sync */
     :root {
-      /* Made bg-main semi-transparent to show the 3D canvas behind it */
-      --bg-main: rgba(18, 18, 18, 0.4); 
-      --bg-card: rgba(30, 30, 30, 0.85);
-      --bg-sidebar: rgba(10, 10, 10, 0.95);
-      --border-color: rgba(51, 51, 51, 0.6);
-      --text-main: #e4e4e7;
+      /* DYNAMIC UI SYNC VARIABLES (Updated via JS based on AI Mood) */
+      --dynamic-color: #4e4376; 
+      --dynamic-glow: rgba(78, 67, 118, 0.4);
+
+      /* App Theme Overlays (Highly transparent for 3D visibility) */
+      --bg-main: rgba(18, 18, 18, 0.25); 
+      --bg-card: rgba(25, 25, 25, 0.65);
+      --bg-sidebar: rgba(10, 10, 10, 0.85);
+      --border-color: rgba(255, 255, 255, 0.1);
+      
+      --text-main: #ffffff;
       --text-sub: #a1a1aa;
-      --accent: #52525b;
-      --accent-hover: #71717a;
-      --user-msg: rgba(63, 63, 70, 0.9);
-      --ai-msg: rgba(30, 30, 30, 0.9);
-      --input-bg: rgba(30, 30, 30, 0.85);
+      
+      --user-msg: rgba(63, 63, 70, 0.75);
+      --ai-msg: rgba(20, 20, 20, 0.75);
+      
       --overlay-bg: rgba(0, 0, 0, 0.7);
-      --shimmer-1: rgba(30, 30, 30, 0.5);
-      --shimmer-2: rgba(51, 51, 51, 0.5);
-      --shadow: rgba(0, 0, 0, 0.4);
+      --shadow: rgba(0, 0, 0, 0.5);
       --danger: #ef4444;
-      --danger-hover: #dc2626;
-      --blur-bg: rgba(18, 18, 18, 0.65);
+      --blur-bg: transparent; 
     }
 
-    /* Light Mode Overrides (Powerful Light Gray Palette) */
+    /* Light Mode Overrides - Maintains 3D Visibility but adapts text contrast */
     body.light-mode {
-      /* Semi-transparent light background */
-      --bg-main: rgba(244, 244, 245, 0.4);
-      --bg-card: rgba(255, 255, 255, 0.85);
-      --bg-sidebar: rgba(228, 228, 231, 0.95);
-      --border-color: rgba(212, 212, 216, 0.6);
+      --bg-main: rgba(255, 255, 255, 0.45);
+      --bg-card: rgba(255, 255, 255, 0.75);
+      --bg-sidebar: rgba(240, 240, 245, 0.85);
+      --border-color: rgba(0, 0, 0, 0.1);
+      
       --text-main: #18181b;
       --text-sub: #52525b;
-      --accent: #3f3f46;
-      --accent-hover: #27272a;
-      --user-msg: rgba(82, 82, 91, 0.9);
-      --ai-msg: rgba(255, 255, 255, 0.9);
-      --input-bg: rgba(255, 255, 255, 0.85);
-      --overlay-bg: rgba(24, 24, 27, 0.5);
-      --shimmer-1: rgba(228, 228, 231, 0.5);
-      --shimmer-2: rgba(244, 244, 245, 0.5);
-      --shadow: rgba(0, 0, 0, 0.1);
-      --blur-bg: rgba(244, 244, 245, 0.65);
+      
+      --user-msg: rgba(220, 220, 225, 0.85);
+      --ai-msg: rgba(255, 255, 255, 0.85);
+      
+      --shadow: rgba(0, 0, 0, 0.15);
     }
 
     * { 
@@ -75,13 +71,14 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      z-index: -1; /* Place behind everything */
-      pointer-events: none; /* Let clicks pass through to the UI */
+      z-index: -1; 
+      pointer-events: none; 
+      background: #050505; /* Deep space base behind the 3D object */
     }
 
     html, body {
       overscroll-behavior-y: none;
-      background-color: transparent; /* Changed to transparent to see WebGL */
+      background-color: transparent; 
       color: var(--text-main);
       width: 100%;
       height: 100dvh;
@@ -122,11 +119,12 @@
       position: fixed;
       inset: 0;
       background: var(--overlay-bg);
-      backdrop-filter: blur(3px);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
       z-index: 900;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.25s ease;
+      transition: opacity 0.3s ease;
     }
 
     .sidebar-overlay.active {
@@ -137,7 +135,8 @@
     .sidebar {
       width: 300px;
       background-color: var(--bg-sidebar);
-      backdrop-filter: blur(20px);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
       border-right: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
@@ -147,7 +146,7 @@
       top: 0;
       z-index: 1000;
       transform: translateX(-100%);
-      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .sidebar.active {
@@ -186,14 +185,17 @@
     .sidebar-header h2 {
       font-size: 1.15rem;
       font-weight: 700;
-      color: var(--accent);
+      color: var(--dynamic-color);
       letter-spacing: -0.3px;
+      text-shadow: 0 0 10px var(--dynamic-glow);
+      transition: color 0.5s ease, text-shadow 0.5s ease;
     }
 
     .new-chat-btn {
       margin: 0;
       padding: 16px;
-      background: var(--accent);
+      background: var(--dynamic-color);
+      box-shadow: 0 4px 15px var(--dynamic-glow);
       color: #ffffff;
       border: none;
       border-radius: 0;
@@ -204,7 +206,7 @@
       justify-content: center;
       gap: 8px;
       cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
+      transition: background 0.5s ease, box-shadow 0.5s ease, transform 0.1s;
     }
 
     .new-chat-btn:active {
@@ -233,7 +235,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      transition: background 0.15s;
+      transition: background 0.2s;
     }
 
     .session-item:hover, .session-item.active {
@@ -242,7 +244,7 @@
 
     .session-item.active {
       font-weight: 600;
-      border-left: 3px solid var(--accent);
+      border-left: 3px solid var(--dynamic-color);
     }
 
     .session-title {
@@ -263,7 +265,7 @@
       align-items: center;
       justify-content: center;
       font-size: 1.1rem;
-      transition: color 0.15s, background 0.15s;
+      transition: color 0.2s, background 0.2s;
     }
 
     .session-menu-trigger:hover {
@@ -278,11 +280,12 @@
       flex-direction: column;
       height: 100%;
       position: relative;
-      background: var(--bg-main); /* Now semi-transparent */
+      background: var(--bg-main); 
+      backdrop-filter: blur(2px);
       padding-top: 60px;
     }
 
-    /* Top Navigation Header */
+    /* PREMIUM FROSTED TOP BAR - Theme Agnostic */
     .top-bar {
       position: absolute;
       top: 0;
@@ -290,15 +293,19 @@
       right: 0;
       height: 60px;
       padding: 0 16px;
-      border-bottom: none; 
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: transparent; /* Let glass effect show */
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      /* Static glass look that works on dark and light */
+      background: rgba(10, 10, 10, 0.15); 
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-color);
+      /* Dynamic shadow matches the 3D object's mood */
+      box-shadow: 0 4px 30px var(--dynamic-glow);
       z-index: 50;
       flex-shrink: 0;
+      transition: box-shadow 0.8s ease;
     }
 
     .top-bar-left, .top-bar-right {
@@ -318,7 +325,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.15s;
+      transition: background 0.2s;
     }
 
     .icon-btn:hover {
@@ -346,8 +353,9 @@
     .brand-title h1 {
       font-size: 1.1rem;
       font-weight: 700;
-      color: var(--accent);
-      text-shadow: 0 1px 4px rgba(0,0,0,0.2); /* Added shadow for visibility over 3D */
+      color: var(--dynamic-color);
+      text-shadow: 0 1px 8px var(--dynamic-glow);
+      transition: color 0.8s ease, text-shadow 0.8s ease;
     }
 
     /* PWA Install Pill Container */
@@ -367,20 +375,16 @@
       pointer-events: auto; 
       align-items: center;
       gap: 6px;
-      background: var(--accent);
+      background: var(--dynamic-color);
       color: #ffffff;
       padding: 6px 14px;
       border-radius: 20px;
       font-size: 0.8rem;
       font-weight: 700;
-      border: none;
+      border: 1px solid rgba(255,255,255,0.2);
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(82, 82, 91, 0.4);
-      transition: background 0.2s;
-    }
-    
-    .install-pill:hover {
-      background: var(--accent-hover);
+      box-shadow: 0 4px 15px var(--dynamic-glow);
+      transition: background 0.5s ease, box-shadow 0.5s ease;
     }
 
     /* Chat Messages Window */
@@ -415,18 +419,18 @@
       font-size: 0.95rem;
       word-wrap: break-word;
       white-space: pre-wrap;
-      box-shadow: 0 4px 15px var(--shadow);
-      backdrop-filter: blur(12px); /* Glassmorphism for bubbles */
-      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      backdrop-filter: blur(15px); 
+      -webkit-backdrop-filter: blur(15px);
       user-select: text !important;
       -webkit-user-select: text !important;
     }
 
     .message.user {
       background-color: var(--user-msg);
-      color: #ffffff;
+      color: var(--text-main); /* Adaptable to theme */
       border-bottom-right-radius: 4px;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid var(--border-color);
     }
 
     .message.ai {
@@ -443,9 +447,10 @@
       padding: 0 4px;
     }
     .msg-action-icon {
-      background: rgba(0,0,0,0.2);
-      backdrop-filter: blur(4px);
-      border: none;
+      background: rgba(0,0,0,0.15);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--border-color);
       color: var(--text-sub);
       cursor: pointer;
       padding: 6px;
@@ -453,11 +458,12 @@
       align-items: center;
       justify-content: center;
       border-radius: 50%;
-      transition: background 0.2s, color 0.2s;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
     }
     .msg-action-icon:hover, .msg-action-icon:active {
-      color: var(--text-main);
+      color: var(--dynamic-color);
       background: var(--bg-card);
+      border-color: var(--dynamic-color);
     }
     .msg-action-icon svg {
       width: 18px;
@@ -474,10 +480,11 @@
       max-width: 320px;
       padding: 10px 18px;
       background-color: var(--bg-card);
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
       border-radius: 20px;
       border: 1px solid var(--border-color);
-      box-shadow: 0 4px 15px var(--shadow);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     }
 
     .thinking-header {
@@ -492,8 +499,10 @@
     }
     .thinking-spinner {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 2px solid transparent; 
-      border-top-color: var(--accent); border-right-color: var(--accent-hover); border-radius: 50%; 
+      border-top-color: var(--dynamic-color); 
+      border-radius: 50%; 
       animation: spin 1s linear infinite; z-index: 1; 
+      box-shadow: 0 0 10px var(--dynamic-glow);
     }
     .thinking-logo { 
       width: 24px; height: 24px; z-index: 2; border-radius: 50%; animation: pulse-logo 2s ease-in-out infinite; object-fit: cover;
@@ -502,7 +511,7 @@
     @keyframes spin { 100% { transform: rotate(360deg); } }
     @keyframes pulse-logo { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 
-    /* Floating Input Box */
+    /* PROFESSIONAL FROSTED INPUT CONTAINER */
     .input-container {
       padding: 12px 16px;
       padding-bottom: calc(12px + env(safe-area-inset-bottom)); 
@@ -510,9 +519,7 @@
       width: 100%;
       margin: 0 auto;
       margin-top: auto;
-      background: var(--blur-bg); 
-      backdrop-filter: blur(20px); 
-      -webkit-backdrop-filter: blur(20px); 
+      background: transparent; /* Container strictly transparent */
       z-index: 50; 
       flex-shrink: 0;
     }
@@ -520,20 +527,24 @@
     .input-box {
       display: flex;
       align-items: flex-end;
-      background: var(--input-bg);
+      /* Frosted Glass Pill */
+      background: rgba(20, 20, 20, 0.4);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
       border: 1px solid var(--border-color);
       border-radius: 24px;
       padding: 8px 12px 8px 18px;
-      box-shadow: 0 4px 16px var(--shadow);
+      /* Outer dynamic glow syncing with 3D Core */
+      box-shadow: 0 0 20px var(--dynamic-glow), inset 0 0 10px rgba(255,255,255,0.02);
       gap: 8px;
       margin-bottom: 15px; 
-      transition: all 0.3s ease;
+      transition: border-color 0.5s ease, box-shadow 0.5s ease, transform 0.2s;
     }
     
     .input-box:focus-within {
-      border-color: var(--accent);
-      box-shadow: 0 -2px 15px rgba(0,0,0,0.2);
-      transform: translateY(-1px);
+      border-color: var(--dynamic-color);
+      box-shadow: 0 0 30px var(--dynamic-glow), inset 0 0 10px rgba(255,255,255,0.05);
+      transform: translateY(-2px);
     }
 
     .input-box textarea {
@@ -561,33 +572,40 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: color 0.15s, background 0.15s;
+      transition: color 0.3s, background 0.3s;
       flex-shrink: 0;
     }
 
     .action-btn:hover {
       color: var(--text-main);
-      background: var(--bg-main);
+      background: rgba(255,255,255,0.1);
     }
 
     .action-btn.listening {
-      color: var(--danger);
-      animation: pulse 1s infinite;
+      color: var(--dynamic-color);
+      animation: pulse-mic 1s infinite;
     }
 
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
+    @keyframes pulse-mic {
+      0% { transform: scale(1); text-shadow: 0 0 10px var(--dynamic-glow); }
+      50% { transform: scale(1.15); text-shadow: 0 0 20px var(--dynamic-glow); }
+      100% { transform: scale(1); text-shadow: 0 0 10px var(--dynamic-glow); }
     }
 
     .send-btn {
-      background: var(--accent);
+      background: var(--dynamic-color);
       color: #ffffff;
+      box-shadow: 0 0 15px var(--dynamic-glow);
+      transition: background 0.5s ease, box-shadow 0.5s ease, transform 0.1s;
     }
 
     .send-btn:hover {
-      background: var(--accent-hover);
+      transform: scale(1.05);
+      box-shadow: 0 0 25px var(--dynamic-glow);
+    }
+    
+    .send-btn:active {
+      transform: scale(0.95);
     }
 
     /* Mobile Bottom Sheet Modal */
@@ -595,11 +613,12 @@
       position: fixed;
       inset: 0;
       background: var(--overlay-bg);
-      backdrop-filter: blur(2px);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
       z-index: 1100;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.25s ease;
+      transition: opacity 0.3s ease;
     }
 
     .bottom-sheet-overlay.active {
@@ -613,19 +632,21 @@
       right: 0;
       bottom: 0;
       background: var(--bg-card);
-      backdrop-filter: blur(20px);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
       border-top-left-radius: 20px;
       border-top-right-radius: 20px;
       border-top: 1px solid var(--border-color);
       padding: 20px 20px 32px 20px;
       z-index: 1200;
       transform: translateY(100%);
-      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       flex-direction: column;
       gap: 12px;
       max-width: 500px;
       margin: 0 auto;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
     }
 
     .bottom-sheet.active {
@@ -654,11 +675,11 @@
       gap: 12px;
       cursor: pointer;
       text-align: left;
-      transition: background 0.15s;
+      transition: background 0.2s;
     }
 
     .sheet-option:hover {
-      background: var(--bg-main);
+      background: rgba(255,255,255,0.05);
     }
 
     .sheet-option.danger {
@@ -666,7 +687,7 @@
     }
 
     .sheet-option.danger:hover {
-      background: rgba(239, 68, 68, 0.2);
+      background: rgba(239, 68, 68, 0.15);
     }
 
     /* Custom Rename Modal */
@@ -674,7 +695,8 @@
       position: fixed;
       inset: 0;
       background: var(--overlay-bg);
-      backdrop-filter: blur(3px);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
       z-index: 1300;
       display: flex;
       align-items: center;
@@ -682,7 +704,7 @@
       padding: 20px;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.2s ease;
+      transition: opacity 0.3s ease;
     }
 
     .rename-modal-overlay.active {
@@ -692,72 +714,77 @@
 
     .rename-modal {
       background: var(--bg-card);
-      backdrop-filter: blur(20px);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
       border: 1px solid var(--border-color);
       border-radius: 16px;
-      padding: 20px;
+      padding: 24px;
       width: 100%;
       max-width: 400px;
       display: flex;
       flex-direction: column;
       gap: 16px;
-      box-shadow: 0 10px 25px var(--shadow);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
     }
 
     .rename-modal h3 {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       color: var(--text-main);
     }
 
     .rename-modal input {
       width: 100%;
-      padding: 12px;
-      border-radius: 8px;
+      padding: 14px;
+      border-radius: 10px;
       border: 1px solid var(--border-color);
-      background: var(--bg-main);
+      background: rgba(0,0,0,0.2);
       color: var(--text-main);
       outline: none;
-      font-size: 0.95rem;
+      font-size: 1rem;
+      transition: border-color 0.3s, box-shadow 0.3s;
     }
 
     .rename-modal input:focus {
-      border-color: var(--accent);
+      border-color: var(--dynamic-color);
+      box-shadow: 0 0 10px var(--dynamic-glow);
     }
 
     .rename-modal-actions {
       display: flex;
       justify-content: flex-end;
-      gap: 10px;
+      gap: 12px;
+      margin-top: 8px;
     }
 
     .btn-secondary {
-      padding: 8px 16px;
-      border-radius: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
       border: 1px solid var(--border-color);
       background: transparent;
       color: var(--text-main);
       cursor: pointer;
       font-weight: 500;
-      transition: background 0.15s;
+      transition: background 0.2s;
     }
 
     .btn-secondary:hover {
-      background: var(--bg-main);
+      background: rgba(255,255,255,0.05);
     }
 
     .btn-primary {
-      padding: 8px 16px;
-      border-radius: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
       border: none;
-      background: var(--accent);
+      background: var(--dynamic-color);
       color: #ffffff;
       cursor: pointer;
       font-weight: 600;
-      transition: background 0.15s;
+      box-shadow: 0 4px 15px var(--dynamic-glow);
+      transition: background 0.5s ease, box-shadow 0.5s ease;
     }
 
     .btn-primary:hover {
-      background: var(--accent-hover);
+      box-shadow: 0 6px 20px var(--dynamic-glow);
     }
   </style>
 </head>
@@ -797,7 +824,6 @@
       </div>
 
       <div class="top-bar-right">
-        <!-- New Chat Action -->
         <button class="icon-btn" onclick="createNewSession()" aria-label="New Chat">
           <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
         </button>
@@ -856,11 +882,11 @@
     </div>
   </div>
 
-  <!-- MOOD RESPONSIVE 3D BACKGROUND ENGINE (THREE.JS) -->
+  <!-- MOOD RESPONSIVE 3D BACKGROUND ENGINE (ADVANCED SHADER & UI SYNC) -->
   <script>
     // 3D Engine Variables
     let scene, camera, renderer, blobMesh, uniforms;
-    let targetColorA = new THREE.Color(0x3a3a4a); // Default Neutral Dark Gray/Blue
+    let targetColorA = new THREE.Color(0x3a3a4a); 
     let targetColorB = new THREE.Color(0x1e1e24);
     let currentColorA = new THREE.Color(0x3a3a4a);
     let currentColorB = new THREE.Color(0x1e1e24);
@@ -869,16 +895,31 @@
     let targetSpeed = 0.5;
     let currentSpeed = 0.5;
     
-    // Mood Color Palettes
+    // Physics / Inertia Variables
+    let targetRotationSpeed = 0.002;
+    let currentRotationSpeed = 0.002;
+    
+    // Complete 17+ Emotion Map syncing Backend to 3D and UI Elements
     const moodPalettes = {
-        "neutral":  { a: 0x3a3a4a, b: 0x1e1e24, distortion: 0.3, speed: 0.3 },
-        "calm":     { a: 0x2b5876, b: 0x4e4376, distortion: 0.2, speed: 0.2 },
-        "happy":    { a: 0xffd194, b: 0x70e1f5, distortion: 0.6, speed: 0.8 },
-        "anxious":  { a: 0xff4b2b, b: 0xff416c, distortion: 1.2, speed: 1.5 },
-        "angry":    { a: 0x8a2387, b: 0xe94057, distortion: 1.5, speed: 1.8 },
-        "sad":      { a: 0x141e30, b: 0x243b55, distortion: 0.1, speed: 0.1 },
-        "thinking": { a: 0x8e2de2, b: 0x4a00e0, distortion: 0.8, speed: 1.2 }, // API Loading State
-        "typing":   { a: 0x00c6ff, b: 0x0072ff, distortion: 0.5, speed: 0.7 }  // Active Input State
+        "neutral":     { a: 0x3a3a4a, b: 0x222233, distortion: 0.3, speed: 0.3, rotSpeed: 0.002 },
+        "calm":        { a: 0x2b5876, b: 0x4e4376, distortion: 0.2, speed: 0.2, rotSpeed: 0.001 },
+        "happy":       { a: 0xffd194, b: 0x70e1f5, distortion: 0.6, speed: 0.8, rotSpeed: 0.005 },
+        "hopeful":     { a: 0xa8ff78, b: 0x78ffd6, distortion: 0.4, speed: 0.5, rotSpeed: 0.004 },
+        "grateful":    { a: 0xfbd3e9, b: 0xbb377d, distortion: 0.3, speed: 0.4, rotSpeed: 0.003 },
+        "motivated":   { a: 0xf9d423, b: 0xff4e50, distortion: 0.7, speed: 0.9, rotSpeed: 0.006 },
+        "anxious":     { a: 0xff4b2b, b: 0xff416c, distortion: 1.2, speed: 1.5, rotSpeed: 0.015 },
+        "panicked":    { a: 0xffa500, b: 0xd91e18, distortion: 1.8, speed: 2.5, rotSpeed: 0.025 }, 
+        "angry":       { a: 0x8a2387, b: 0xe94057, distortion: 1.5, speed: 1.8, rotSpeed: 0.018 },
+        "frustrated":  { a: 0xc31432, b: 0x240b36, distortion: 1.3, speed: 1.4, rotSpeed: 0.012 },
+        "sad":         { a: 0x141e30, b: 0x243b55, distortion: 0.1, speed: 0.1, rotSpeed: 0.001 },
+        "grieving":    { a: 0x111111, b: 0x333333, distortion: 0.05, speed: 0.05, rotSpeed: 0.0005 }, 
+        "lonely":      { a: 0x4ca1af, b: 0xc4e0e5, distortion: 0.1, speed: 0.15, rotSpeed: 0.001 }, 
+        "exhausted":   { a: 0x5c258d, b: 0x4389a2, distortion: 0.1, speed: 0.05, rotSpeed: 0.0008 }, 
+        "overwhelmed": { a: 0x8e0e00, b: 0x1f1c18, distortion: 1.6, speed: 1.0, rotSpeed: 0.01 }, 
+        "numb":        { a: 0xbdc3c7, b: 0x2c3e50, distortion: 0.0, speed: 0.0, rotSpeed: 0.000 }, 
+        "insecure":    { a: 0x3a6186, b: 0x89253e, distortion: 0.5, speed: 0.6, rotSpeed: 0.004 },
+        "thinking":    { a: 0x8e2de2, b: 0x4a00e0, distortion: 0.8, speed: 1.2, rotSpeed: 0.012 }, 
+        "typing":      { a: 0x00c6ff, b: 0x0072ff, distortion: 0.6, speed: 1.0, rotSpeed: 0.015 }  
     };
 
     function init3DBackground() {
@@ -889,9 +930,9 @@
 
         scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.z = 5;
+        camera.position.z = 6; // Pulled back slightly for better framing
 
-        // Custom GLSL Shaders directly inline
+        // Advanced Vertex Shader for organic, core-like distortion
         const vertexShader = `
             uniform float uTime;
             uniform float uDistortion;
@@ -899,14 +940,13 @@
             varying vec2 vUv;
             varying vec3 vNormal;
 
-            // Simple 3D noise function
             vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
             vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
             vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
             vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
 
             float snoise(vec3 v) { 
-                const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
+                const vec2  C = vec2(1.0/6.0, 1.0/3.0);
                 const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
                 vec3 i  = floor(v + dot(v, C.yyy) );
                 vec3 x0 = v - i + dot(i, C.xxx) ;
@@ -953,7 +993,6 @@
                 vNormal = normal;
                 
                 vec3 pos = position;
-                // Add noise based on time, position, and speed/distortion uniforms
                 float noise = snoise(vec3(pos.x * 2.0, pos.y * 2.0, pos.z * 2.0 + (uTime * uSpeed)));
                 pos += normal * noise * uDistortion;
                 
@@ -961,6 +1000,7 @@
             }
         `;
 
+        // Advanced Fragment Shader for a Glowing Crystalline look with Fresnel Rim Lighting
         const fragmentShader = `
             uniform vec3 uColorA;
             uniform vec3 uColorB;
@@ -969,17 +1009,19 @@
             varying vec3 vNormal;
 
             void main() {
-                // Mix colors based on UVs and Normal vector to create an iridescent glow
+                // Base mixing for iridescence
                 float mixStrength = dot(vNormal, vec3(0.5, 0.5, 1.0)) * 0.5 + 0.5;
                 mixStrength += sin(vUv.y * 10.0 + uTime) * 0.1;
                 
-                vec3 finalColor = mix(uColorA, uColorB, clamp(mixStrength, 0.0, 1.0));
+                vec3 baseColor = mix(uColorA, uColorB, clamp(mixStrength, 0.0, 1.0));
                 
-                // Add a slight vignette/glow to the edges
-                float glow = pow(1.0 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-                finalColor += vec3(glow * 0.2);
+                // Fresnel Rim Lighting (Creates the crystalline glowing edge effect)
+                float fresnel = pow(1.0 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.5);
+                vec3 rimLight = uColorB * fresnel * 2.0; // Boost rim intensity
+                
+                vec3 finalColor = baseColor + rimLight;
 
-                gl_FragColor = vec4(finalColor, 0.8); // 0.8 alpha to blend slightly with CSS background
+                gl_FragColor = vec4(finalColor, 0.95); 
             }
         `;
 
@@ -1001,8 +1043,7 @@
         });
 
         blobMesh = new THREE.Mesh(geometry, material);
-        // Position slightly off-center for aesthetic
-        blobMesh.position.set(1.5, -0.5, 0); 
+        blobMesh.position.set(0, -0.2, 0); // Centered, slightly down
         scene.add(blobMesh);
 
         window.addEventListener('resize', onWindowResize, false);
@@ -1018,10 +1059,9 @@
     function animate3D(time) {
         requestAnimationFrame(animate3D);
         
-        // Update time uniform
         uniforms.uTime.value = time * 0.001;
 
-        // Smoothly interpolate current colors and states to target mood states
+        // Smoothly interpolate current colors and distortion to target states
         currentColorA.lerp(targetColorA, 0.02);
         currentColorB.lerp(targetColorB, 0.02);
         currentDistortion += (targetDistortion - currentDistortion) * 0.02;
@@ -1032,40 +1072,57 @@
         uniforms.uDistortion.value = currentDistortion;
         uniforms.uSpeed.value = currentSpeed;
         
-        // Gentle rotation
-        blobMesh.rotation.y += 0.002;
-        blobMesh.rotation.x += 0.001;
+        // Physics: Smoothly apply rotational inertia
+        currentRotationSpeed += (targetRotationSpeed - currentRotationSpeed) * 0.05;
+        blobMesh.rotation.y += currentRotationSpeed;
+        blobMesh.rotation.x += currentRotationSpeed * 0.5;
 
         renderer.render(scene, camera);
     }
 
-    // Global function to trigger mood shift from standard UI logic
+    // THE MASTER SYNC ENGINE: Binds AI Mood -> 3D Object -> App UI CSS
     window.setMoodState = function(moodName) {
         const palette = moodPalettes[moodName] || moodPalettes["neutral"];
+        
+        // 1. Update 3D Engine Targets
         targetColorA.setHex(palette.a);
         targetColorB.setHex(palette.b);
         targetDistortion = palette.distortion;
         targetSpeed = palette.speed;
+        targetRotationSpeed = palette.rotSpeed;
+
+        // 2. Extract RGB from the secondary (glow) color hex
+        const r = (palette.b >> 16) & 255;
+        const g = (palette.b >> 8) & 255;
+        const b = palette.b & 255;
+        
+        // Ensure hex is padded properly for CSS
+        const cssHex = '#' + palette.b.toString(16).padStart(6, '0');
+        const cssRgbaGlow = `rgba(${r}, ${g}, ${b}, 0.5)`;
+
+        // 3. Sync UI Instantly via CSS Root Variables
+        document.documentElement.style.setProperty('--dynamic-color', cssHex);
+        document.documentElement.style.setProperty('--dynamic-glow', cssRgbaGlow);
     };
 
-    // Trigger typing state
+    // Trigger dynamic interaction typing state
     let typingTimer;
     function handleTyping() {
         window.setMoodState("typing");
         clearTimeout(typingTimer);
         typingTimer = setTimeout(() => {
-            window.setMoodState("neutral");
-        }, 1500);
+            window.setMoodState("neutral"); // Return to neutral, or keep last API state if stored globally
+        }, 1200);
     }
   </script>
 
   <!-- MAIN APPLICATION LOGIC -->
   <script>
-    // System State Engine
     let state = {
       sessions: {},
       currentSessionId: null,
-      selectedTargetSessionId: null
+      selectedTargetSessionId: null,
+      lastAiMood: "neutral" // Keep track of the last emotion to return to after typing
     };
 
     let speechRecognizer = null;
@@ -1076,14 +1133,13 @@
     const INITIAL_WELCOME = "Hello! I am MindGuard-AI. How are you feeling today? You can share your mood, stress levels, or daily sleep quality.";
 
     const thinkingPhrases = [
-      "Analyzing mood patterns...",
+      "Analyzing emotional subtext...",
       "Evaluating stress indicators...",
-      "Reviewing behavioral context...",
+      "Mapping cognitive frameworks...",
       "Synthesizing psychological insights...",
-      "Processing emotional nuances...",
-      "Consulting cognitive frameworks...",
+      "Processing tonal nuances...",
       "Formulating empathetic response...",
-      "Generating actionable advice...",
+      "Generating actionable relief...",
       "MindGuard-AI is almost ready..."
     ];
 
@@ -1094,7 +1150,8 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      init3DBackground(); // Initialize the 3D Background Engine
+      init3DBackground(); 
+      window.setMoodState(state.lastAiMood); // Initialize sync
       loadStateFromStorage();
       setupSystemThemeEngine();
       registerPWA();
@@ -1126,6 +1183,8 @@
       });
       inputEl.addEventListener('blur', () => {
           setTimeout(lockViewportAndHeader, 100);
+          // When keyboard closes, return to last detected mood instead of staying in typing mode
+          window.setMoodState(state.lastAiMood);
       });
     }
 
@@ -1211,13 +1270,13 @@
       speechRecognizer.onstart = () => {
         isListening = true;
         document.getElementById('micBtn').classList.add('listening');
-        window.setMoodState("typing"); // Trigger visual shift when speaking
+        window.setMoodState("typing"); // Actively spinning while listening
       };
 
       speechRecognizer.onend = () => {
         isListening = false;
         document.getElementById('micBtn').classList.remove('listening');
-        window.setMoodState("neutral");
+        window.setMoodState(state.lastAiMood);
       };
 
       speechRecognizer.onresult = (event) => {
@@ -1230,7 +1289,7 @@
       speechRecognizer.onerror = () => {
         isListening = false;
         document.getElementById('micBtn').classList.remove('listening');
-        window.setMoodState("neutral");
+        window.setMoodState(state.lastAiMood);
       };
     }
 
@@ -1247,9 +1306,15 @@
     function loadStateFromStorage() {
       const savedSessions = localStorage.getItem('mg_sessions');
       const savedActiveId = localStorage.getItem('mg_active_id');
+      const savedMood = localStorage.getItem('mg_last_mood');
 
       if (savedSessions) {
         state.sessions = JSON.parse(savedSessions);
+      }
+
+      if (savedMood) {
+        state.lastAiMood = savedMood;
+        window.setMoodState(savedMood);
       }
 
       if (savedActiveId && state.sessions[savedActiveId]) {
@@ -1268,6 +1333,7 @@
       
       localStorage.setItem('mg_sessions', JSON.stringify(state.sessions));
       localStorage.setItem('mg_active_id', state.currentSessionId);
+      localStorage.setItem('mg_last_mood', state.lastAiMood);
     }
 
     function createNewSession(shouldRender = true) {
@@ -1281,13 +1347,14 @@
         ]
       };
       state.currentSessionId = newId;
+      state.lastAiMood = "neutral";
       saveStateToStorage();
 
       if (shouldRender) {
         renderSidebar();
         renderCurrentChat();
         closeAllOverlays();
-        window.setMoodState("neutral"); // Reset background
+        window.setMoodState("neutral");
       }
     }
 
@@ -1299,6 +1366,8 @@
       renderSidebar();
       renderCurrentChat();
       closeAllOverlays();
+      // On switch, return to neutral to let the context rebuild emotionally visually
+      state.lastAiMood = "neutral"; 
       window.setMoodState("neutral");
     }
 
@@ -1383,12 +1452,11 @@
 
       activeSession.history.forEach(msg => {
         const type = msg.role === 'model' ? 'ai' : 'user';
-        // Extract text if the object was saved as a JSON string from the new API
         let textContent = msg.parts[0].text;
         try {
             const parsed = JSON.parse(textContent);
             if (parsed.text) textContent = parsed.text;
-        } catch (e) {} // Not JSON, keep original
+        } catch (e) {} 
 
         appendMessageUI(textContent, type);
       });
@@ -1435,28 +1503,29 @@
 
         if (response.status === 429) {
           appendMessageUI(data.error || "Rate limit exceeded. Please wait a minute.", 'ai');
-          window.setMoodState("neutral");
+          window.setMoodState(state.lastAiMood);
         } else if (data.text) {
           
-          // Apply 3D Background Mood Update from API!
+          // GLOBALLY SYNC EVERYTHING TO THE NEW MOOD
           if (data.mood) {
+              state.lastAiMood = data.mood;
               window.setMoodState(data.mood);
           } else {
+              state.lastAiMood = "neutral";
               window.setMoodState("neutral");
           }
 
           appendMessageUI(data.text, 'ai');
-          // Save the clean text in history, avoiding stringified JSON accumulation
           activeSession.history.push({ role: 'model', parts: [{ text: data.text }] });
           saveStateToStorage();
         } else {
           appendMessageUI("Unable to process response at this time.", 'ai');
-          window.setMoodState("neutral");
+          window.setMoodState(state.lastAiMood);
         }
       } catch (err) {
         thinkingEl.remove();
         appendMessageUI("Network error: Failed to connect to MindGuard engine.", 'ai');
-        window.setMoodState("neutral");
+        window.setMoodState(state.lastAiMood);
       }
     }
 
@@ -1504,7 +1573,7 @@
        const wrapper = btn.closest('.message-wrapper');
        const text = wrapper.querySelector('.message').innerText;
        navigator.clipboard.writeText(text);
-       btn.style.color = 'var(--accent)';
+       btn.style.color = 'var(--dynamic-color)';
        setTimeout(() => btn.style.color = 'var(--text-sub)', 1500);
     };
     
