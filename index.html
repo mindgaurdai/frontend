@@ -78,7 +78,7 @@
 
     html, body {
       overscroll-behavior-y: none;
-      background-color: transparent; 
+      background-color: #050505; /* Hard-coded black instantly prevents white flash on load */
       color: var(--text-main);
       width: 100%;
       height: 100dvh;
@@ -207,6 +207,12 @@
       gap: 8px;
       cursor: pointer;
       transition: background 0.5s ease, box-shadow 0.5s ease, transform 0.1s;
+    }
+
+    .new-chat-btn svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0; /* Prevents icon from breaking layout on small screens */
     }
 
     .new-chat-btn:active {
@@ -869,7 +875,8 @@
     <!-- Floating Action Input Box -->
     <footer class="input-container">
       <div class="input-box">
-        <textarea id="userInput" rows="1" placeholder="Share your mood or thoughts..." aria-label="Message Input" onkeydown="handleKeyDown(event)" oninput="handleTyping()"></textarea>
+        <!-- Textarea placeholder optimized for space -->
+        <textarea id="userInput" rows="1" placeholder="Say something..." aria-label="Message Input" onkeydown="handleKeyDown(event)" oninput="handleTyping()"></textarea>
         
         <!-- Premium Frosted Mic Button -->
         <button class="action-btn mic-btn" id="micBtn" onclick="toggleSpeechRecognition()" aria-label="Voice Input">
@@ -917,7 +924,7 @@
     let currentColorA = new THREE.Color(0x3a3a4a);
     let currentColorB = new THREE.Color(0x1e1e24);
     
-    // Advanced Physics Targets
+    // Advanced Physics Targets (Now includes Pulse Speed & Y-Axis Floating)
     let targetDistortion = 0.4;
     let currentDistortion = 0.4;
     let targetSpeed = 0.5;
@@ -928,28 +935,32 @@
     let currentScale = 1.0;
     let targetPulse = 0.0;
     let currentPulse = 0.0;
+    let targetPulseSpeed = 0.005;
+    let currentPulseSpeed = 0.005;
+    let targetYOffset = -0.2;
+    let currentYOffset = -0.2;
     
-    // Complete Emotion Map: Synced Scale, Shape, Pulse, Motion & UI Colors
+    // Complete 19 Emotion Map: Synced Scale, Shape, Pulse, Y-Float, Motion & UI Colors
     const moodPalettes = {
-        "neutral":     { a: 0x3a3a4a, b: 0x222233, distortion: 0.3, speed: 0.3, rotSpeed: 0.002, scale: 1.0, pulse: 0.0 },
-        "calm":        { a: 0x2b5876, b: 0x4e4376, distortion: 0.2, speed: 0.2, rotSpeed: 0.001, scale: 0.9, pulse: 0.0 },
-        "happy":       { a: 0xffd194, b: 0x70e1f5, distortion: 0.6, speed: 0.8, rotSpeed: 0.005, scale: 1.15, pulse: 0.02 },
-        "hopeful":     { a: 0xa8ff78, b: 0x78ffd6, distortion: 0.4, speed: 0.5, rotSpeed: 0.004, scale: 1.05, pulse: 0.0 },
-        "grateful":    { a: 0xfbd3e9, b: 0xbb377d, distortion: 0.3, speed: 0.4, rotSpeed: 0.003, scale: 1.0, pulse: 0.0 },
-        "motivated":   { a: 0xf9d423, b: 0xff4e50, distortion: 0.7, speed: 0.9, rotSpeed: 0.006, scale: 1.2, pulse: 0.05 },
-        "anxious":     { a: 0xff4b2b, b: 0xff416c, distortion: 1.2, speed: 1.5, rotSpeed: 0.015, scale: 0.85, pulse: 0.1 },
-        "panicked":    { a: 0xffa500, b: 0xd91e18, distortion: 2.5, speed: 2.5, rotSpeed: 0.035, scale: 1.4, pulse: 0.15 }, 
-        "angry":       { a: 0x8a2387, b: 0xe94057, distortion: 1.8, speed: 1.8, rotSpeed: 0.018, scale: 1.3, pulse: 0.08 },
-        "frustrated":  { a: 0xc31432, b: 0x240b36, distortion: 1.3, speed: 1.4, rotSpeed: 0.012, scale: 1.1, pulse: 0.04 },
-        "sad":         { a: 0x141e30, b: 0x243b55, distortion: 0.1, speed: 0.1, rotSpeed: 0.001, scale: 0.6, pulse: 0.0 },
-        "grieving":    { a: 0x111111, b: 0x333333, distortion: 0.05, speed: 0.05, rotSpeed: 0.0005, scale: 0.5, pulse: 0.0 }, 
-        "lonely":      { a: 0x4ca1af, b: 0xc4e0e5, distortion: 0.1, speed: 0.15, rotSpeed: 0.001, scale: 0.7, pulse: 0.0 }, 
-        "exhausted":   { a: 0x5c258d, b: 0x4389a2, distortion: 0.1, speed: 0.05, rotSpeed: 0.0008, scale: 0.65, pulse: 0.0 }, 
-        "overwhelmed": { a: 0x8e0e00, b: 0x1f1c18, distortion: 1.6, speed: 1.0, rotSpeed: 0.01, scale: 1.35, pulse: 0.1 }, 
-        "numb":        { a: 0xbdc3c7, b: 0x2c3e50, distortion: 0.0, speed: 0.0, rotSpeed: 0.000, scale: 0.75, pulse: 0.0 }, 
-        "insecure":    { a: 0x3a6186, b: 0x89253e, distortion: 0.5, speed: 0.6, rotSpeed: 0.004, scale: 0.85, pulse: 0.0 },
-        "thinking":    { a: 0x8e2de2, b: 0x4a00e0, distortion: 0.8, speed: 1.2, rotSpeed: 0.012, scale: 1.0, pulse: 0.05 }, 
-        "typing":      { a: 0x00c6ff, b: 0x0072ff, distortion: 0.6, speed: 1.0, rotSpeed: 0.015, scale: 1.15, pulse: 0.12 }  
+        "neutral":     { a: 0x3a3a4a, b: 0x222233, distortion: 0.3, speed: 0.3, rotSpeed: 0.002, scale: 1.0, pulse: 0.0, pSpeed: 0.0, yOff: -0.2 },
+        "calm":        { a: 0x2b5876, b: 0x4e4376, distortion: 0.2, speed: 0.2, rotSpeed: 0.001, scale: 0.9, pulse: 0.02, pSpeed: 0.002, yOff: -0.2 },
+        "happy":       { a: 0xffd194, b: 0x70e1f5, distortion: 0.6, speed: 0.8, rotSpeed: 0.005, scale: 1.15, pulse: 0.05, pSpeed: 0.008, yOff: 0.0 }, // Floats up
+        "hopeful":     { a: 0xa8ff78, b: 0x78ffd6, distortion: 0.4, speed: 0.5, rotSpeed: 0.004, scale: 1.05, pulse: 0.03, pSpeed: 0.005, yOff: -0.1 },
+        "grateful":    { a: 0xfbd3e9, b: 0xbb377d, distortion: 0.3, speed: 0.4, rotSpeed: 0.003, scale: 1.0, pulse: 0.02, pSpeed: 0.004, yOff: -0.2 },
+        "motivated":   { a: 0xf9d423, b: 0xff4e50, distortion: 0.7, speed: 0.9, rotSpeed: 0.006, scale: 1.2, pulse: 0.06, pSpeed: 0.01, yOff: 0.1 }, // Floats up & beats
+        "anxious":     { a: 0xff4b2b, b: 0xff416c, distortion: 1.2, speed: 1.5, rotSpeed: 0.015, scale: 0.85, pulse: 0.15, pSpeed: 0.025, yOff: -0.3 }, // Low & jittery
+        "panicked":    { a: 0xffa500, b: 0xd91e18, distortion: 2.5, speed: 2.5, rotSpeed: 0.035, scale: 1.4, pulse: 0.2, pSpeed: 0.04, yOff: -0.1 }, 
+        "angry":       { a: 0x8a2387, b: 0xe94057, distortion: 1.8, speed: 1.8, rotSpeed: 0.018, scale: 1.3, pulse: 0.1, pSpeed: 0.02, yOff: 0.0 },
+        "frustrated":  { a: 0xc31432, b: 0x240b36, distortion: 1.3, speed: 1.4, rotSpeed: 0.012, scale: 1.1, pulse: 0.08, pSpeed: 0.015, yOff: -0.2 },
+        "sad":         { a: 0x141e30, b: 0x243b55, distortion: 0.1, speed: 0.1, rotSpeed: 0.001, scale: 0.6, pulse: 0.01, pSpeed: 0.001, yOff: -0.5 }, // Sinks down
+        "grieving":    { a: 0x111111, b: 0x333333, distortion: 0.05, speed: 0.05, rotSpeed: 0.0005, scale: 0.5, pulse: 0.005, pSpeed: 0.0005, yOff: -0.6 }, // Smallest, lowest
+        "lonely":      { a: 0x4ca1af, b: 0xc4e0e5, distortion: 0.1, speed: 0.15, rotSpeed: 0.001, scale: 0.7, pulse: 0.01, pSpeed: 0.002, yOff: -0.4 }, 
+        "exhausted":   { a: 0x5c258d, b: 0x4389a2, distortion: 0.1, speed: 0.05, rotSpeed: 0.0008, scale: 0.65, pulse: 0.02, pSpeed: 0.001, yOff: -0.5 }, 
+        "overwhelmed": { a: 0x8e0e00, b: 0x1f1c18, distortion: 1.6, speed: 1.0, rotSpeed: 0.01, scale: 1.35, pulse: 0.12, pSpeed: 0.03, yOff: -0.1 }, 
+        "numb":        { a: 0xbdc3c7, b: 0x2c3e50, distortion: 0.0, speed: 0.0, rotSpeed: 0.000, scale: 0.75, pulse: 0.0, pSpeed: 0.0, yOff: -0.3 }, 
+        "insecure":    { a: 0x3a6186, b: 0x89253e, distortion: 0.5, speed: 0.6, rotSpeed: 0.004, scale: 0.85, pulse: 0.05, pSpeed: 0.015, yOff: -0.4 },
+        "thinking":    { a: 0x8e2de2, b: 0x4a00e0, distortion: 0.8, speed: 1.2, rotSpeed: 0.012, scale: 1.0, pulse: 0.05, pSpeed: 0.01, yOff: -0.1 }, 
+        "typing":      { a: 0x00c6ff, b: 0x0072ff, distortion: 0.6, speed: 1.0, rotSpeed: 0.015, scale: 1.15, pulse: 0.12, pSpeed: 0.015, yOff: 0.0 }  
     };
 
     function init3DBackground() {
@@ -1071,7 +1082,7 @@
         });
 
         blobMesh = new THREE.Mesh(geometry, material);
-        blobMesh.position.set(0, -0.2, 0);
+        blobMesh.position.set(0, currentYOffset, 0);
         scene.add(blobMesh);
 
         window.addEventListener('resize', onWindowResize, false);
@@ -1096,6 +1107,8 @@
         currentSpeed += (targetSpeed - currentSpeed) * 0.02;
         currentScale += (targetScale - currentScale) * 0.05;
         currentPulse += (targetPulse - currentPulse) * 0.05;
+        currentPulseSpeed += (targetPulseSpeed - currentPulseSpeed) * 0.05;
+        currentYOffset += (targetYOffset - currentYOffset) * 0.05;
         currentRotationSpeed += (targetRotationSpeed - currentRotationSpeed) * 0.05;
 
         // Apply Shader Uniforms
@@ -1105,8 +1118,11 @@
         uniforms.uSpeed.value = currentSpeed;
         
         // Apply Dynamic Scale & Pulse Sine Wave
-        let scaleWithPulse = currentScale + Math.sin(time * 0.005) * currentPulse;
+        let scaleWithPulse = currentScale + Math.sin(time * currentPulseSpeed) * currentPulse;
         blobMesh.scale.set(scaleWithPulse, scaleWithPulse, scaleWithPulse);
+
+        // Apply Vertical Float
+        blobMesh.position.y = currentYOffset;
 
         // Apply Rotational Inertia
         blobMesh.rotation.y += currentRotationSpeed;
@@ -1127,6 +1143,8 @@
         targetRotationSpeed = palette.rotSpeed;
         targetScale = palette.scale;
         targetPulse = palette.pulse;
+        targetPulseSpeed = palette.pSpeed;
+        targetYOffset = palette.yOff;
 
         // 2. Extract Glow & Sync UI CSS
         const r = (palette.b >> 16) & 255;
